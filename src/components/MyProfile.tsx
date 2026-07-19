@@ -29,13 +29,24 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
       year: 'numeric'
     });
     
-    // Simulating parsing of a resume file and pre-populating skills if they upload a new one
+    // Add default parsed skills as objects with initial confidence ratings
+    const defaultParsed = [
+      { name: 'Git', confidence: 80 },
+      { name: 'CSS Grid', confidence: 75 },
+      { name: 'Tailwind CSS', confidence: 70 }
+    ];
+    
+    const currentSkillNames = profile.skills.map(s => s.name.toLowerCase());
+    const newSkills = [
+      ...profile.skills,
+      ...defaultParsed.filter(ds => !currentSkillNames.includes(ds.name.toLowerCase()))
+    ];
+    
     onUpdateProfile({
       ...profile,
       resumeName: fileName,
       resumeStatus: `Uploaded and parsed successfully on ${today}`,
-      // Optionally merge some fresh skills as demo parsed feedback
-      skills: Array.from(new Set([...profile.skills, 'Git', 'CSS Grid', 'Tailwind CSS']))
+      skills: newSkills
     });
   };
 
@@ -70,12 +81,12 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
     }
   };
 
-  // Add skill tag
+  // Add skill tag (defaulting to 80% confidence)
   const handleAddSkillSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const clean = newSkill.trim();
-    if (clean && !profile.skills.some(s => s.toLowerCase() === clean.toLowerCase())) {
-      const updatedSkills = [...profile.skills, clean];
+    if (clean && !profile.skills.some(s => s.name.toLowerCase() === clean.toLowerCase())) {
+      const updatedSkills = [...profile.skills, { name: clean, confidence: 80 }];
       updateField('skills', updatedSkills);
       setNewSkill('');
     }
@@ -83,7 +94,18 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
 
   // Delete skill tag
   const handleRemoveSkill = (skillToDelete: string) => {
-    const updatedSkills = profile.skills.filter(s => s !== skillToDelete);
+    const updatedSkills = profile.skills.filter(s => s.name !== skillToDelete);
+    updateField('skills', updatedSkills);
+  };
+
+  // Update skill confidence
+  const handleUpdateSkillConfidence = (skillName: string, confidence: number) => {
+    const updatedSkills = profile.skills.map(s => {
+      if (s.name === skillName) {
+        return { ...s, confidence: Math.max(0, Math.min(100, confidence)) };
+      }
+      return s;
+    });
     updateField('skills', updatedSkills);
   };
 
@@ -323,19 +345,62 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
               <h3 style={{ margin: 0 }}>Core Skills Checklist</h3>
             </div>
             
-            <div className="skills-tags-manager">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
               {profile.skills.map((skill) => (
-                <span key={skill} className="skill-tag-editable">
-                  {skill}
-                  <button 
-                    type="button" 
-                    className="remove-tag-btn"
-                    onClick={() => handleRemoveSkill(skill)}
-                    aria-label={`Remove ${skill}`}
-                  >
-                    &times;
-                  </button>
-                </span>
+                <div 
+                  key={skill.name} 
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '0.3rem', 
+                    padding: '0.6rem 0.75rem', 
+                    border: '1px solid var(--color-border)', 
+                    borderRadius: '8px', 
+                    backgroundColor: 'var(--bg-primary)' 
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--color-text)' }}>{skill.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="badge badge-applied" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', fontWeight: 'bold' }}>
+                        {skill.confidence}% confidence
+                      </span>
+                      <button 
+                        type="button" 
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          color: 'var(--terracotta)', 
+                          fontSize: '1.1rem', 
+                          cursor: 'pointer', 
+                          padding: 0,
+                          lineHeight: 1
+                        }}
+                        onClick={() => handleRemoveSkill(skill.name)}
+                        aria-label={`Remove ${skill.name}`}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <input 
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      style={{ 
+                        width: '100%', 
+                        accentColor: 'var(--sage-green)', 
+                        height: '4px', 
+                        cursor: 'pointer',
+                        margin: '0.2rem 0'
+                      }}
+                      value={skill.confidence}
+                      onChange={(e) => handleUpdateSkillConfidence(skill.name, Number(e.target.value))}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
 

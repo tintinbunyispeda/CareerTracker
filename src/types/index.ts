@@ -29,6 +29,11 @@ export interface JobApplication {
 export type ApplicationStatus = JobApplication['status'];
 export type WorkType = JobApplication['workType'];
 
+export interface UserSkill {
+  name: string;
+  confidence: number; // 0 to 100 percentage rating
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -36,7 +41,7 @@ export interface UserProfile {
   website?: string;
   resumeName?: string;
   resumeStatus?: string;
-  skills: string[];
+  skills: UserSkill[];
   education: {
     id: string;
     degree: string;
@@ -58,3 +63,4 @@ export interface UserProfile {
     description: string;
   }[];
 }
+

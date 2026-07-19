@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -14,11 +14,27 @@ function App() {
   // State for active tab/page view
   const [activeTab, setActiveTab] = useState<'dashboard' | 'applications' | 'analytics' | 'analyzer' | 'profile' | 'insights'>('dashboard');
   
-  // State for applications list
-  const [applications, setApplications] = useState<JobApplication[]>(initialApplications);
+  // State for applications list (loaded from localStorage dynamically, fallback to mock data)
+  const [applications, setApplications] = useState<JobApplication[]>(() => {
+    const cached = localStorage.getItem('careertrack_applications');
+    return cached ? JSON.parse(cached) : initialApplications;
+  });
 
-  // State for user resume profile
-  const [profile, setProfile] = useState<UserProfile>(mockProfile);
+  // State for user resume profile (loaded from localStorage dynamically, fallback to mock profile)
+  const [profile, setProfile] = useState<UserProfile>(() => {
+    const cached = localStorage.getItem('careertrack_profile');
+    return cached ? JSON.parse(cached) : mockProfile;
+  });
+  
+  // Sync applications data to localStorage on changes
+  useEffect(() => {
+    localStorage.setItem('careertrack_applications', JSON.stringify(applications));
+  }, [applications]);
+
+  // Sync profile details to localStorage on changes
+  useEffect(() => {
+    localStorage.setItem('careertrack_profile', JSON.stringify(profile));
+  }, [profile]);
   
   // Mobile sidebar drawer state
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -55,6 +71,7 @@ function App() {
         return (
           <Applications
             applications={applications}
+            profile={profile}
             onAdd={handleAddApplication}
             onEdit={handleEditApplication}
             onDelete={handleDeleteApplication}

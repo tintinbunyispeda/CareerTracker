@@ -33,7 +33,7 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
   );
 
   // Sanitized profile skills lowercased for quick lookup
-  const userSkillsLower = profile.skills.map(s => s.toLowerCase());
+  const userSkillsLower = profile.skills.map(s => s.name.toLowerCase());
 
   // Tally collections
   const missingSkillsTally: Record<string, number> = {};
@@ -44,11 +44,8 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
     const reqSkills = app.requiredSkills || [];
     
     // Tally gaps (missing skills)
-    // If application has custom skillGaps, use it; otherwise calculate dynamically
     const gaps = app.skillGaps || reqSkills.filter(s => !userSkillsLower.includes(s.toLowerCase()));
     gaps.forEach(skill => {
-      // Normalise key casing to display nicely (e.g. "docker" -> "Docker")
-      // find original case from requiredSkills or default to title case
       const originalCase = reqSkills.find(rs => rs.toLowerCase() === skill.toLowerCase()) || skill;
       missingSkillsTally[originalCase] = (missingSkillsTally[originalCase] || 0) + 1;
     });
@@ -71,6 +68,61 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
   // Recommended skill to learn next
   const topSkillToLearn = sortedMissing.length > 0 ? sortedMissing[0][0] : 'N/A';
   const topSkillToLearnCount = sortedMissing.length > 0 ? sortedMissing[0][1] : 0;
+
+  // ==========================================
+  // Data Scientist Skill Upgrade Index
+  // Calculates: Priority = Job_Frequency * (100 - Your_Confidence)
+  // ==========================================
+  const demandedSkillsMap: Record<string, { count: number; isRequired: boolean }> = {};
+  
+  applications.forEach(app => {
+    const req = app.requiredSkills || [];
+    const pref = app.preferredSkills || [];
+    
+    req.forEach(s => {
+      const key = s.toLowerCase();
+      const current = demandedSkillsMap[key] || { count: 0, isRequired: true };
+      demandedSkillsMap[key] = { count: current.count + 1, isRequired: true };
+    });
+    
+    pref.forEach(s => {
+      const key = s.toLowerCase();
+      const current = demandedSkillsMap[key] || { count: 0, isRequired: false };
+      // Preferred skills carry 0.5 weight in demand frequency
+      demandedSkillsMap[key] = { count: current.count + 0.5, isRequired: current.isRequired || false };
+    });
+  });
+
+  const upgradeIndex = Object.entries(demandedSkillsMap).map(([key, info]) => {
+    // Retain original casing
+    let originalName = key;
+    for (const app of applications) {
+      const found = (app.requiredSkills || []).find(s => s.toLowerCase() === key) || 
+                    (app.preferredSkills || []).find(s => s.toLowerCase() === key);
+      if (found) {
+        originalName = found;
+        break;
+      }
+    }
+    
+    // Get user confidence rating
+    const userSkillObj = profile.skills.find(s => s.name.toLowerCase() === key);
+    const confidence = userSkillObj ? userSkillObj.confidence : 0;
+    const priorityIndex = Math.round(info.count * (100 - confidence));
+    
+    return {
+      name: originalName,
+      demandCount: Math.ceil(info.count),
+      confidence,
+      priorityIndex,
+      hasSkill: !!userSkillObj
+    };
+  });
+
+  // Sort descending by priorityIndex (filter out items where index is 0 - i.e. 100% confidence & no gaps)
+  const sortedUpgradeIndex = upgradeIndex
+    .filter(item => item.priorityIndex > 0)
+    .sort((a, b) => b.priorityIndex - a.priorityIndex);
 
   // Stats breakdowns
   const highMatchCount = applications.filter(a => a.matchScore >= 80).length;
@@ -202,61 +254,88 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
 
         </div>
 
-        {/* Right Column: AI Explanations and CV Improvement Insights */}
+        {/* Right Column: Skill Upgrade Priorities */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           <div className="card">
             <div className="profile-section-header">
-              <h3 style={{ margin: 0 }}>Dynamic Learning Strategy</h3>
+              <h3 style={{ margin: 0 }}>🔬 Skill Upgrade Index</h3>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.9rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                Calculated dynamically: <code>Demand_Frequency * (100 - Your_Confidence)</code>. Upgrade targets are ranked by criticality.
+              </p>
               
-              {topSkillToLearn !== 'N/A' ? (
-                <div 
-                  style={{ 
-                    padding: '1rem', 
-                    borderRadius: '8px', 
-                    backgroundColor: 'var(--ochre-light)', 
-                    border: '1px solid var(--ochre-border)' 
-                  }}
-                >
-                  <strong style={{ color: 'var(--ochre-dark)', display: 'block', fontSize: '1rem', marginBottom: '0.4rem' }}>
-                    💡 Top Priority: Learn {topSkillToLearn}
-                  </strong>
-                  <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--color-text)' }}>
-                    <strong>{topSkillToLearn}</strong> appeared in {topSkillToLearnCount} of your analyzed job opportunities. 
-                    Acquiring basic proficiency in this tool will directly unlock access to these applications.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ padding: '1rem', borderRadius: '8px', backgroundColor: 'var(--sage-green-light)', border: '1px solid var(--sage-green-border)' }}>
-                  <strong style={{ color: 'var(--sage-green-dark)', display: 'block', fontSize: '1rem', marginBottom: '0.4rem' }}>
-                    🌿 Excellent Standing
-                  </strong>
-                  <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--color-text)' }}>
-                    You currently satisfy all mandatory required skills extracted from your active listings. Keep searching for postings that leverage your strengths!
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <strong style={{ display: 'block', marginBottom: '0.4rem' }}>Resume Optimization Advice</strong>
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', margin: 0 }}>
-                  Based on current market demands in your workspace, tailors should weave descriptions of 
-                  {sortedMissing.slice(0, 2).map((item, idx) => (
-                    <span key={item[0]}>
-                      {idx > 0 ? ' and ' : ' '}
-                      <strong>{item[0]}</strong>
-                    </span>
-                  ))}
-                  into their personal projects section to immediately address automated reviewer constraints.
-                </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                {sortedUpgradeIndex.length > 0 ? (
+                  sortedUpgradeIndex.slice(0, 5).map((item) => {
+                    // Determine status priority classification
+                    let badgeClass = 'badge-applied'; 
+                    let priorityLabel = 'Minor Polish';
+                    if (item.priorityIndex >= 150) {
+                      badgeClass = 'badge-rejected'; 
+                      priorityLabel = 'Critical Action';
+                    } else if (item.priorityIndex >= 50) {
+                      badgeClass = 'badge-applied'; 
+                      priorityLabel = 'Upgrade Recommended';
+                    }
+                    
+                    return (
+                      <div 
+                        key={item.name} 
+                        style={{ 
+                          padding: '0.75rem', 
+                          border: '1px solid var(--color-border)', 
+                          borderRadius: '8px', 
+                          backgroundColor: 'var(--bg-primary)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.4rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '0.9rem' }}>{item.name}</strong>
+                          <span 
+                            className={`badge ${badgeClass}`} 
+                            style={{ 
+                              fontSize: '0.7rem', 
+                              padding: '0.15rem 0.4rem',
+                              backgroundColor: item.priorityIndex >= 150 ? 'var(--soft-red-light)' : (item.priorityIndex >= 50 ? 'var(--ochre-light)' : 'var(--sage-green-light)'),
+                              color: item.priorityIndex >= 150 ? 'var(--soft-red-dark)' : (item.priorityIndex >= 50 ? 'var(--ochre-dark)' : 'var(--sage-green-dark)'),
+                              border: '1px solid currentColor'
+                            }}
+                          >
+                            {priorityLabel}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                          <span>Asked in <strong>{item.demandCount}</strong> applications</span>
+                          <span>Confidence: <strong>{item.confidence}%</strong></span>
+                        </div>
+                        <div style={{ height: '6px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '3px', overflow: 'hidden', marginTop: '0.2rem' }}>
+                          <div 
+                            style={{ 
+                              width: `${Math.min(100, item.priorityIndex / 4)}%`, 
+                              height: '100%', 
+                              backgroundColor: item.priorityIndex >= 150 ? 'var(--soft-red)' : (item.priorityIndex >= 50 ? 'var(--ochre)' : 'var(--sage-green)'),
+                              borderRadius: '3px' 
+                            }} 
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+                    🌿 No upgrade targets detected. Your confidence ratings match all requirements!
+                  </div>
+                )}
               </div>
 
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Application Funnel Strength</strong>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
+              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+                <strong style={{ display: 'block', marginBottom: '0.4rem' }}>Funnel Alignment</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.8rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Active trackers (Applied / Interviews)</span>
                     <span style={{ fontWeight: 'bold' }}>{activeTrackerCount} jobs</span>
@@ -267,7 +346,7 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Skill coverage index</span>
-                    <span style={{ fontWeight: 'bold', color: 'var(--sage-green)' }}>
+                    <span style={{ fontWeight: 'bold', color: 'var(--sage-green-dark)' }}>
                       {sortedMatched.length + sortedMissing.length > 0 
                         ? Math.round((sortedMatched.length / (sortedMatched.length + sortedMissing.length)) * 100)
                         : 100

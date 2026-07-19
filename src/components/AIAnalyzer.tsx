@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { JobApplication, UserProfile, WorkType } from '../types';
+import { calculateMatchMetrics } from '../utils/matching';
 
 interface AIAnalyzerProps {
   profile: UserProfile;
@@ -29,68 +30,15 @@ interface ExtractedJob {
 const AIAnalyzer: React.FC<AIAnalyzerProps> = ({ profile, onSaveApplication, onNavigate }) => {
   // Analyzer UI States
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // Store raw File object
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<ExtractedJob | null>(null);
 
-  // Populate editable results with mock data
-  const triggerMockAnalysis = () => {
-    setAnalysisResult({
-      title: 'Junior React Developer',
-      company: 'Alder & Spruce Dev',
-      location: 'Bend, OR',
-      workType: 'Hybrid',
-      employmentType: 'Full-time',
-      salary: '$75,000 - $85,000 / year',
-      deadline: '2026-08-15',
-      duration: 'N/A',
-      requirements: [
-        '1+ years of experience with React codebase layouts.',
-        'Familiarity with responsive styling grids and CSS variables.',
-        'Comfortable working in a collaborative small agency setup.'
-      ],
-      responsibilities: [
-        'Translate Figma workspace designs into structured web applications.',
-        'Refactor static templates into dynamic React components.',
-        'Collaborate with developers to debug cross-browser compatibility.'
-      ],
-      requiredSkills: ['React', 'TypeScript', 'CSS', 'GraphQL', 'Docker'],
-      preferredSkills: ['Sass', 'Figma', 'Node.js'],
-      benefits: [
-        'Hybrid working hours.',
-        'Cozy forest-facing office in Bend, OR.',
-        'Health, vision, and weekly coffee budget.'
-      ],
-      explanation: 'You have solid foundations in React, TypeScript, and CSS which are core requirements. However, this role uses GraphQL and Docker which are missing from your resume checklist.',
-      cvSuggestions: 'Describe any project where you integrated external APIs (e.g. REST APIs) to show preparedness for GraphQL, and note familiarity with containers or deployment workflows if you have any.',
-      notes: 'AI Extracted from screenshot. Alder & Spruce works with eco-conscious brands.'
-    });
-  };
-
-  // Loading progress bar effect
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined = undefined;
-    if (loading) {
-      interval = setInterval(() => {
-        setLoadProgress((prev) => {
-          if (prev >= 100) {
-            if (interval) clearInterval(interval);
-            setLoading(false);
-            triggerMockAnalysis();
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 150);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [loading]);
-
   // Screenshot loaders
   const handleScreenshotFile = (file: File) => {
+    setSelectedFile(file); // Keep track of the raw file
     const reader = new FileReader();
     reader.onload = () => {
       setScreenshot(reader.result as string);
@@ -128,74 +76,71 @@ const AIAnalyzer: React.FC<AIAnalyzerProps> = ({ profile, onSaveApplication, onN
 
   const clearScreenshot = () => {
     setScreenshot(null);
+    setSelectedFile(null);
     setAnalysisResult(null);
   };
 
-  // Run the AI Analyzer (simulated)
-  const handleAnalyzeJob = () => {
-    setLoadProgress(0);
-    setLoading(true);
-  };
-
-  // ==========================================
-  // Dynamic Comparison Match Calculation Engine
-  // ==========================================
-  const calculateMatchMetrics = () => {
-    if (!analysisResult) return null;
-
-    const userSkills = profile.skills.map(s => s.toLowerCase());
-    const requiredSkills = analysisResult.requiredSkills || [];
-    const preferredSkills = analysisResult.preferredSkills || [];
-
-    const strongMatches: string[] = [];
-    const partialMatches: string[] = [];
-    const skillGaps: string[] = [];
-
-    requiredSkills.forEach((skill: string) => {
-      const sLower = skill.toLowerCase();
-      if (userSkills.includes(sLower)) {
-        strongMatches.push(skill);
-      } else {
-        const isPartial = userSkills.some(us => us.includes(sLower) || sLower.includes(us));
-        if (isPartial) {
-          partialMatches.push(skill);
-        } else {
-          skillGaps.push(skill);
-        }
-      }
-    });
-
-    const totalRequired = requiredSkills.length;
-    const score = totalRequired > 0
-      ? Math.round(((strongMatches.length + partialMatches.length * 0.5) / totalRequired) * 100)
-      : 80;
-
-    let priority: 'High' | 'Medium' | 'Low' = 'Medium';
-    if (score >= 80) priority = 'High';
-    else if (score < 50) priority = 'Low';
-
-    const recommendedSkills: string[] = [];
-    skillGaps.slice(0, 3).forEach(s => recommendedSkills.push(s));
-    
-    if (recommendedSkills.length === 0 && preferredSkills.length > 0) {
-      preferredSkills.forEach((s: string) => {
-        if (!userSkills.includes(s.toLowerCase())) {
-          recommendedSkills.push(s);
-        }
-      });
+  // Run the AI Analyzer (calling local FastAPI backend)
+  const handleAnalyzeJob = async () => {
+    if (!selectedFile) {
+      alert('Please upload or drop a job screenshot first.');
+      return;
     }
 
-    return {
-      score,
-      priority,
-      strongMatches,
-      partialMatches,
-      skillGaps,
-      recommendedSkills
-    };
+    setLoadProgress(0);
+    setLoading(true);
+
+    // Visual loading progress simulation (intervals from 0% to 90%)
+    const interval = setInterval(() => {
+      setLoadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 150);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', selectedFile);
+
+      const response = await fetch('http://localhost:8000/analyze-job', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      clearInterval(interval);
+      setLoadProgress(100);
+      
+      // Load structured JSON analysis into editing blocks
+      if (data && data.analysis) {
+        setAnalysisResult(data.analysis);
+      } else {
+        throw new Error('Analysis content is missing in the server response.');
+      }
+      
+      setLoading(false);
+    } catch (err: unknown) {
+      clearInterval(interval);
+      setLoading(false);
+      setLoadProgress(0);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      alert(`Failed to analyze job screenshot: ${errorMessage}`);
+    }
   };
 
-  const metrics = calculateMatchMetrics();
+
+  // Dynamic Comparison Match Calculation Engine using global utility
+  const metrics = analysisResult 
+    ? calculateMatchMetrics(profile.skills, analysisResult.requiredSkills, analysisResult.preferredSkills, profile.experience, analysisResult.title) 
+    : null;
 
   // ==========================================
   // Form list array controllers

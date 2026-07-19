@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import type { JobApplication, ApplicationStatus, WorkType } from '../types';
+import type { JobApplication, ApplicationStatus, WorkType, UserProfile } from '../types';
+import { calculateMatchMetrics } from '../utils/matching';
 import Modal from './Modal';
 
 interface ApplicationsProps {
   applications: JobApplication[];
+  profile: UserProfile; // Passed to compute metrics dynamically
   onAdd: (app: Omit<JobApplication, 'id'>) => void;
   onEdit: (app: JobApplication) => void;
   onDelete: (id: string) => void;
@@ -36,7 +38,7 @@ const initialFormState = {
   benefits: ''
 };
 
-const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit, onDelete }) => {
+const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAdd, onEdit, onDelete }) => {
   // Navigation & Search States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
@@ -58,7 +60,7 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: typeof initialFormState) => ({
       ...prev,
       [name]: name === 'matchScore' ? Math.max(0, Math.min(100, Number(value) || 0)) : value
     }));
@@ -72,7 +74,13 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
       return;
     }
 
-    // Convert string inputs back to arrays
+    // Convert comma-separated string inputs back to arrays with type-safe handlers
+    const reqSkillsArray = formData.requiredSkills ? formData.requiredSkills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    const prefSkillsArray = formData.preferredSkills ? formData.preferredSkills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+
+    // Calculate match parameters dynamically based on Cristine's active profile skills, experience role matching, and position title
+    const metrics = calculateMatchMetrics(profile.skills, reqSkillsArray, prefSkillsArray, profile.experience, formData.position);
+
     const formattedApp: Omit<JobApplication, 'id'> = {
       company: formData.company,
       position: formData.position,
@@ -83,21 +91,21 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
       deadline: formData.deadline || undefined,
       dateApplied: formData.dateApplied || undefined,
       status: formData.status,
-      matchScore: formData.matchScore,
+      matchScore: metrics.score, // Calculated deterministically!
       followUpDate: formData.followUpDate || undefined,
       nextAction: formData.nextAction || undefined,
       notes: formData.notes || undefined,
       
       // Extended fields
       screenshot: formData.screenshot || undefined,
-      priority: formData.priority,
-      requiredSkills: formData.requiredSkills ? formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-      preferredSkills: formData.preferredSkills ? formData.preferredSkills.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-      skillGaps: formData.skillGaps ? formData.skillGaps.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-      requirements: formData.requirements ? formData.requirements.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
-      responsibilities: formData.responsibilities ? formData.responsibilities.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
-      benefits: formData.benefits ? formData.benefits.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
-      aiMatchScore: formData.matchScore // Sync match score to AI match score for display
+      priority: metrics.priority, // Calculated deterministically!
+      requiredSkills: reqSkillsArray,
+      preferredSkills: prefSkillsArray,
+      skillGaps: metrics.skillGaps, // Calculated deterministically!
+      requirements: formData.requirements ? formData.requirements.split('\n').map((s: string) => s.trim()).filter(Boolean) : undefined,
+      responsibilities: formData.responsibilities ? formData.responsibilities.split('\n').map((s: string) => s.trim()).filter(Boolean) : undefined,
+      benefits: formData.benefits ? formData.benefits.split('\n').map((s: string) => s.trim()).filter(Boolean) : undefined,
+      aiMatchScore: metrics.score
     };
 
     if (editingId) {
@@ -115,6 +123,68 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
     setFormData(initialFormState);
     setEditingId(null);
     setIsFormOpen(true);
+  };
+
+  const handleLoadTemplate = () => {
+    setFormData({
+      company: 'Mossy Rock Studio',
+      position: 'Frontend Developer',
+      jobLink: 'https://mossyrock.io/careers',
+      location: 'Hybrid - Bend, OR',
+      workType: 'Hybrid',
+      dateFound: new Date().toISOString().split('T')[0],
+      deadline: '2026-09-01',
+      dateApplied: '',
+      status: 'Wishlist',
+      matchScore: 85,
+      followUpDate: '',
+      nextAction: 'Optimize resume checklist and apply online.',
+      notes: 'An agency building beautiful environmental dashboards. They value clean CSS skills.',
+      screenshot: '',
+      priority: 'High',
+      requiredSkills: 'React, TypeScript, CSS, Git',
+      preferredSkills: 'Sass, Figma, Node.js',
+      skillGaps: '',
+      requirements: '1+ years of experience with React layouts\nFamiliarity with responsive CSS structures\nBasic knowledge of interface variants',
+      responsibilities: 'Translate Figma UI designs into clean code\nDevelop accessible and reusable React interfaces\nCoordinate updates with database partners',
+      benefits: 'Competitive annual developer rate\nCozy wooden office spaces\nWeekly organic coffee allowance'
+    });
+  };
+
+  // Get all unique skills from profile and existing applications to show as quick-select pills
+  const getSuggestedSkills = () => {
+    const skillsSet = new Set<string>();
+    
+    // Add active profile skills
+    profile.skills.forEach(s => skillsSet.add(s.name));
+    
+    // Add skills from all applications
+    applications.forEach(app => {
+      if (app.requiredSkills) app.requiredSkills.forEach(s => skillsSet.add(s));
+      if (app.preferredSkills) app.preferredSkills.forEach(s => skillsSet.add(s));
+    });
+    
+    return Array.from(skillsSet).sort();
+  };
+
+  // Toggle skill in input field
+  const handleToggleSkill = (field: 'requiredSkills' | 'preferredSkills', skill: string) => {
+    const currentVal = formData[field] || '';
+    let skillsList = currentVal.split(',').map((s: string) => s.trim()).filter(Boolean);
+    const index = skillsList.findIndex((s: string) => s.toLowerCase() === skill.toLowerCase());
+    
+    if (index >= 0) {
+      // Remove if exists
+      skillsList = skillsList.filter((_, idx) => idx !== index);
+    } else {
+      // Add if doesn't exist
+      skillsList.push(skill);
+    }
+    
+    setFormData((prev: typeof initialFormState) => ({
+      ...prev,
+      [field]: skillsList.join(', ')
+    }));
   };
 
   const openEditModal = (app: JobApplication) => {
@@ -488,6 +558,29 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
+          {!editingId && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 -0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn" 
+                style={{ 
+                  backgroundColor: 'var(--ochre-light)', 
+                  borderColor: 'var(--ochre)', 
+                  color: 'var(--ochre-dark)', 
+                  fontSize: '0.8rem', 
+                  padding: '0.35rem 0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontWeight: '600'
+                }}
+                onClick={handleLoadTemplate}
+              >
+                <span>⚡</span> Load Demo Template
+              </button>
+            </div>
+          )}
+
           <h4 style={{ margin: '0 0 -0.5rem', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.25rem', color: 'var(--color-text-secondary)' }}>
             OVERVIEW
           </h4>
@@ -694,6 +787,34 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
                 value={formData.requiredSkills}
                 onChange={handleInputChange}
               />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem' }}>
+                {getSuggestedSkills().map(skill => {
+                  const isSelected = (formData.requiredSkills || '')
+                    .split(',')
+                    .map((s: string) => s.trim().toLowerCase())
+                    .includes(skill.toLowerCase());
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => handleToggleSkill('requiredSkills', skill)}
+                      className={`badge ${isSelected ? 'badge-interviewing' : 'badge-applied'}`}
+                      style={{ 
+                        cursor: 'pointer', 
+                        border: '1px solid var(--color-border)', 
+                        padding: '0.15rem 0.4rem', 
+                        fontSize: '0.7rem',
+                        background: isSelected ? 'var(--sage-green)' : 'var(--bg-primary)',
+                        color: isSelected ? 'white' : 'var(--color-text)',
+                        borderRadius: '12px',
+                        outline: 'none'
+                      }}
+                    >
+                      {isSelected ? '✓' : '+'} {skill}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label">Preferred Skills (comma separated)</label>
@@ -705,6 +826,34 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, onAdd, onEdit
                 value={formData.preferredSkills}
                 onChange={handleInputChange}
               />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem' }}>
+                {getSuggestedSkills().map(skill => {
+                  const isSelected = (formData.preferredSkills || '')
+                    .split(',')
+                    .map((s: string) => s.trim().toLowerCase())
+                    .includes(skill.toLowerCase());
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => handleToggleSkill('preferredSkills', skill)}
+                      className={`badge ${isSelected ? 'badge-applied' : 'badge-applied'}`}
+                      style={{ 
+                        cursor: 'pointer', 
+                        border: '1px solid var(--color-border)', 
+                        padding: '0.15rem 0.4rem', 
+                        fontSize: '0.7rem',
+                        background: isSelected ? 'var(--ochre)' : 'var(--bg-primary)',
+                        color: isSelected ? 'white' : 'var(--color-text)',
+                        borderRadius: '12px',
+                        outline: 'none'
+                      }}
+                    >
+                      {isSelected ? '✓' : '+'} {skill}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

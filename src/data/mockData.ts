@@ -8,16 +8,16 @@ export const mockProfile: UserProfile = {
   resumeName: 'cristine_cv_2026.pdf',
   resumeStatus: 'Uploaded and parsed successfully on July 10, 2026',
   skills: [
-    'React',
-    'TypeScript',
-    'JavaScript',
-    'CSS',
-    'HTML5',
-    'Git',
-    'Responsive Design',
-    'REST APIs',
-    'Figma',
-    'UI Design'
+    { name: 'React', confidence: 90 },
+    { name: 'TypeScript', confidence: 85 },
+    { name: 'JavaScript', confidence: 90 },
+    { name: 'CSS', confidence: 95 },
+    { name: 'HTML5', confidence: 95 },
+    { name: 'Git', confidence: 85 },
+    { name: 'Responsive Design', confidence: 90 },
+    { name: 'REST APIs', confidence: 80 },
+    { name: 'Figma', confidence: 75 },
+    { name: 'UI Design', confidence: 70 }
   ],
   education: [
     {
