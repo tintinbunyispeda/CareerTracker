@@ -2,7 +2,25 @@
 
 A cozy, Notion-inspired personal job application tracker combined with an AI-driven skill demand intelligence system. Built to help developers organize their job hunt, upload screenshot postings to extract criteria, and dynamically target their learning schedules using clear, data-driven prioritization formulas.
 
-![CareerTracker Dashboard Preview](./public/dashboard_screenshot.png)
+## 📸 Galeri Tampilan Aplikasi
+
+Berikut adalah tampilan antarmuka dan fitur-fitur utama dari **CareerTracker & SkillScope**:
+
+### 1. Dashboard Utama (Sistem Pemantauan)
+Menampilkan ringkasan statistik lamaran kerja, tingkat kecocokan rata-rata, upgrade index skill, dan daftar lamaran dalam status wishlist.
+![Dashboard Utama](./public/dashboard_screenshot.png)
+
+### 2. Tracker Lowongan Kerja (Applications Page)
+Daftar seluruh lamaran pekerjaan yang sedang dilacak dengan visual badge status, prioritas, dan dynamic match scoring.
+![Applications Page](./public/application_page.png)
+
+### 3. Formulir Input Lamaran Baru (Requirement Form Modal)
+Formulir input lamaran kerja 2-Kolom modern yang diperlebar ke samping untuk menghilangkan scroll vertikal, dilengkapi auto-suggest skill tags.
+![Requirement Form](./public/requirement_form.png)
+
+### 4. Profil Karir & Parser CV AI (My Profile Page)
+Halaman profil karir terpadu yang menampilkan data personal, riwayat kerja, riwayat proyek, dan sistem pengunggah CV PDF yang terintegrasi ke Parser AI.
+![My Profile](./public/Profile.png)
 
 ---
 

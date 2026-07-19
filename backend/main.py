@@ -271,3 +271,122 @@ async def update_profile(profile_data: Dict[str, Any]):
         global memory_profile
         memory_profile = profile_data
         return profile_data
+
+
+# ==========================================
+# FastAPI AI Resume Parser (PDF -> Structured JSON)
+# ==========================================
+from pypdf import PdfReader
+import io
+
+@app.post("/api/parse-resume")
+async def parse_resume(file: UploadFile = File(...)):
+    file_bytes = await file.read()
+    try:
+        # Load PDF using pypdf reader
+        pdf_file = io.BytesIO(file_bytes)
+        reader = PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() or ""
+            
+        if not text.strip():
+            raise HTTPException(
+                status_code=400, 
+                detail="Could not extract text from PDF resume. The PDF might be scanned or empty."
+            )
+            
+        # Structure the extraction prompt
+        prompt = """
+        You are an expert resume parser. Analyze this resume text and extract the details.
+        
+        Return a raw JSON object with the following fields:
+        {
+          "name": "Full Name",
+          "email": "Email address",
+          "phone": "Phone number",
+          "website": "Personal website or LinkedIn URL",
+          "resumeName": "Name of the resume file",
+          "resumeStatus": "Successfully parsed CV.",
+          "skills": [
+            {"name": "Skill A", "confidence": 90},
+            {"name": "Skill B", "confidence": 80}
+          ],
+          "education": [
+            {"id": "edu1", "degree": "Degree name", "school": "School/University", "year": "Duration years"}
+          ],
+          "experience": [
+            {
+              "id": "exp1",
+              "company": "Company Name",
+              "role": "Role Title",
+              "duration": "Duration years",
+              "bullets": ["Achievement 1", "Achievement 2"]
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj1",
+              "title": "Project Title",
+              "role": "Your role in project",
+              "tech": ["tech1", "tech2"],
+              "description": "Short description of project"
+            }
+          ]
+        }
+        
+        Only extract information present in the text. Return ONLY this JSON block. Do not include markdown code block formatting (like ```json ... ```).
+        """
+        
+        ai_provider = os.getenv("AI_PROVIDER", "gemini").lower()
+        res_text = ""
+        
+        if ai_provider == "gemini" and gemini_key:
+            logger.info("Parsing resume text using Gemini (FREE)...")
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content([prompt, f"Resume content:\n\n{text}"])
+            res_text = response.text.strip()
+        elif ai_provider == "openai" and client:
+            logger.info("Parsing resume text using OpenAI...")
+            response = client.chat.completions.create(
+                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"{prompt}\n\nResume content:\n\n{text}"
+                    }
+                ],
+                response_format={"type": "json_object"}
+            )
+            res_text = response.choices[0].message.content or "{}"
+        else:
+            raise HTTPException(status_code=400, detail="No active AI provider is configured in environment.")
+            
+        # Clean markdown formatting if present
+        if res_text.startswith("```json"):
+            res_text = res_text[7:]
+        if res_text.endswith("```"):
+            res_text = res_text[:-3]
+        res_text = res_text.strip()
+        
+        parsed_json = json.loads(res_text)
+        
+        # Inject standard parsed metadata fields
+        parsed_json["resumeName"] = file.filename
+        parsed_json["resumeStatus"] = "Uploaded and parsed successfully via AI."
+        
+        # Ensure array IDs are present
+        for idx, edu in enumerate(parsed_json.get("education", [])):
+            if "id" not in edu:
+                edu["id"] = f"edu-{idx}-{int(time.time())}"
+        for idx, exp in enumerate(parsed_json.get("experience", [])):
+            if "id" not in exp:
+                exp["id"] = f"exp-{idx}-{int(time.time())}"
+        for idx, proj in enumerate(parsed_json.get("projects", [])):
+            if "id" not in proj:
+                proj["id"] = f"proj-{idx}-{int(time.time())}"
+                
+        return parsed_json
+    except Exception as e:
+        logger.error(f"Resume parsing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to parse resume PDF: {str(e)}")

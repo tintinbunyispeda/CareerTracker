@@ -12,7 +12,144 @@ import { initialApplications, mockProfile } from './data/mockData';
 
 const API_BASE = 'http://localhost:8000/api';
 
+
+// ==========================================
+// Sleek Glassmorphism Login Lock Screen Component
+// ==========================================
+interface LoginProps {
+  onAuthenticate: () => void;
+}
+
+const AppLoginScreen: React.FC<LoginProps> = ({ onAuthenticate }) => {
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'careertrack2026') {
+      sessionStorage.setItem("ct_auth", "true");
+      onAuthenticate();
+    } else {
+      setError('Incorrect secure entry key. Please try again.');
+    }
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #eaf2eb 0%, #f7f3ec 100%)',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      padding: '1.5rem',
+      boxSizing: 'border-box'
+    }}>
+      <div className="card" style={{
+        maxWidth: '400px',
+        width: '100%',
+        padding: '2.5rem',
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(45, 51, 47, 0.08)',
+        backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        border: '1px solid var(--color-border)',
+        textAlign: 'center',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+          <img 
+            src="/logo.png" 
+            alt="CareerTrack Logo" 
+            style={{ 
+              width: '64px', 
+              height: '64px', 
+              borderRadius: '12px', 
+              objectFit: 'cover',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            }} 
+          />
+        </div>
+        
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--color-text)' }}>
+          Welcome to CareerTrack
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: '0 0 1.75rem', lineHeight: '1.4' }}>
+          Please enter the secure entry key to access Cristine's Career Portfolio dashboard.
+        </p>
+
+        <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ fontWeight: 600 }}>Entry Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                placeholder="Enter password..."
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
+                style={{ paddingRight: '2.5rem', height: '42px' }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--color-text-secondary)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  outline: 'none'
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <p style={{ color: 'var(--color-rejected)', fontSize: '0.8rem', margin: '0', fontWeight: 'bold' }}>
+              ⚠️ {error}
+            </p>
+          )}
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontWeight: 600, marginTop: '0.5rem' }}>
+            Authenticate Key
+          </button>
+        </form>
+
+        <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+            🔑 Tip: Default password is <strong>careertrack2026</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 function App() {
+  // Session authentication states
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem("ct_auth") === "true";
+  });
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("ct_auth");
+    setIsAuthenticated(false);
+  };
+
   // State for active tab/page view
   const [activeTab, setActiveTab] = useState<'dashboard' | 'applications' | 'analytics' | 'analyzer' | 'profile' | 'insights'>('dashboard');
   
@@ -241,6 +378,10 @@ function App() {
     }
   };
 
+  if (!isAuthenticated) {
+    return <AppLoginScreen onAuthenticate={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className="app-container">
       {/* Mobile Top Navigation Header */}
@@ -284,6 +425,7 @@ function App() {
         setActiveTab={setActiveTab} 
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
+        onLogout={handleLogout}
       />
 
       {/* Main Page Workspace */}

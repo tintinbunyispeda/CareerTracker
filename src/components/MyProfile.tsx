@@ -21,39 +21,57 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
     });
   };
 
-  // Mock resume PDF parser trigger
-  const handleResumeUpload = (fileName: string) => {
-    const today = new Date().toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-    
-    // Add default parsed skills as objects with initial confidence ratings
-    const defaultParsed = [
-      { name: 'Git', confidence: 80 },
-      { name: 'CSS Grid', confidence: 75 },
-      { name: 'Tailwind CSS', confidence: 70 }
-    ];
-    
-    const currentSkillNames = profile.skills.map(s => s.name.toLowerCase());
-    const newSkills = [
-      ...profile.skills,
-      ...defaultParsed.filter(ds => !currentSkillNames.includes(ds.name.toLowerCase()))
-    ];
-    
+  // Real AI resume PDF parser trigger connecting to backend API
+  const handleResumeUpload = async (file: File) => {
     onUpdateProfile({
       ...profile,
-      resumeName: fileName,
-      resumeStatus: `Uploaded and parsed successfully on ${today}`,
-      skills: newSkills
+      resumeStatus: "Uploading and parsing CV via AI... Please wait."
     });
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const response = await fetch("http://localhost:8000/api/parse-resume", {
+        method: "POST",
+        body: fd
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || `Server returned status ${response.status}`);
+      }
+
+      const parsedData = await response.json();
+
+      // Merge backend parsed profile fields directly into React Profile State
+      onUpdateProfile({
+        ...profile,
+        name: parsedData.name || profile.name,
+        email: parsedData.email || profile.email,
+        phone: parsedData.phone || profile.phone,
+        website: parsedData.website || profile.website,
+        resumeName: parsedData.resumeName || file.name,
+        resumeStatus: parsedData.resumeStatus || "Parsed successfully.",
+        skills: parsedData.skills || profile.skills,
+        education: parsedData.education || profile.education,
+        experience: parsedData.experience || profile.experience,
+        projects: parsedData.projects || profile.projects
+      });
+    } catch (error: any) {
+      console.error("Resume parsing error:", error);
+      onUpdateProfile({
+        ...profile,
+        resumeStatus: `AI Parsing failed: ${error.message || error}`
+      });
+      alert(`Resume Parsing Failed: ${error.message || error}`);
+    }
   };
 
   // Handle file picker event
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      handleResumeUpload(e.target.files[0].name);
+      handleResumeUpload(e.target.files[0]);
     }
   };
 
@@ -74,7 +92,7 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       if (file.name.toLowerCase().endsWith('.pdf') || file.name.toLowerCase().endsWith('.docx')) {
-        handleResumeUpload(file.name);
+        handleResumeUpload(file);
       } else {
         alert('Please upload a PDF or DOCX resume document.');
       }

@@ -5,9 +5,10 @@ interface SidebarProps {
   setActiveTab: (tab: 'dashboard' | 'applications' | 'analytics' | 'analyzer' | 'profile' | 'insights') => void;
   isOpen: boolean;
   onClose: () => void;
+  onLogout?: () => void; // Lock session callback
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onClose, onLogout }) => {
   const handleNavClick = (tab: 'dashboard' | 'applications' | 'analytics' | 'analyzer' | 'profile' | 'insights') => {
     setActiveTab(tab);
     onClose(); // Close sidebar on mobile after navigating
@@ -58,11 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
           className={`sidebar-nav-btn ${activeTab === 'analyzer' ? 'active' : ''}`}
           onClick={() => handleNavClick('analyzer')}
         >
-          {/* Microscope / Scan SVG Icon */}
+          {/* AI Scanner / Scope SVG icon */}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            <path d="M11 8v6M8 11h6" />
+            <path d="M2 12h20" />
+            <path d="M20 12v8H4v-8" />
+            <path d="m15 5-3-3-3 3" />
+            <path d="M12 2v10" />
           </svg>
           AI Analyzer
         </button>
@@ -71,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
           className={`sidebar-nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
           onClick={() => handleNavClick('profile')}
         >
-          {/* User profile SVG icon */}
+          {/* Profile card / avatar SVG icon */}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
@@ -83,11 +85,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
           className={`sidebar-nav-btn ${activeTab === 'insights' ? 'active' : ''}`}
           onClick={() => handleNavClick('insights')}
         >
-          {/* Lightbulb / Insights SVG icon */}
+          {/* Math Score / Upgrade index indicator icon */}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .6 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-            <line x1="9" x2="15" y1="18" y2="18" />
-            <line x1="10" x2="14" y1="22" y2="22" />
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" x2="12" y1="8" y2="12" />
+            <line x1="12" x2="12.01" y1="16" y2="16" />
           </svg>
           Insights
         </button>
@@ -106,21 +108,49 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         </button>
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="profile-avatar">
-          {/* Cozy Tea Mug SVG */}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
-            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
-            <line x1="6" x2="6" y1="2" y2="4" />
-            <line x1="10" x2="10" y1="2" y2="4" />
-            <line x1="14" x2="14" y1="2" y2="4" />
-          </svg>
+      <div className="sidebar-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1 }}>
+          <div className="profile-avatar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+              <line x1="6" x2="6" y1="2" y2="4" />
+              <line x1="10" x2="10" y1="2" y2="4" />
+              <line x1="14" x2="14" y1="2" y2="4" />
+            </svg>
+          </div>
+          <div className="profile-info">
+            <span className="profile-name">Cristine</span>
+            <span className="profile-role">Productivity</span>
+          </div>
         </div>
-        <div className="profile-info">
-          <span className="profile-name">Cristine</span>
-          <span className="profile-role">Productivity Mode</span>
-        </div>
+        
+        {onLogout && (
+          <button 
+            onClick={onLogout} 
+            title="Lock Dashboard"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+              padding: '0.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              transition: 'all 0.2s',
+              outline: 'none'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ochre)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </button>
+        )}
       </div>
     </aside>
   );
