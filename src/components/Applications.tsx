@@ -683,17 +683,26 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
                 <option value="Low">Low</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Match Score (0 - 100)</label>
-              <input
-                type="number"
-                name="matchScore"
-                className="form-control"
-                min="0"
-                max="100"
-                value={formData.matchScore}
-                onChange={handleInputChange}
-              />
+             <div className="form-group">
+              <label className="form-label">Match Score</label>
+              <div 
+                style={{ 
+                  padding: '0.45rem 0.75rem', 
+                  borderRadius: '6px', 
+                  backgroundColor: 'var(--bg-sidebar)', 
+                  border: '1px solid var(--color-border)',
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text-secondary)',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  height: '38px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <span>⚡</span> Calculated automatically
+              </div>
             </div>
           </div>
 

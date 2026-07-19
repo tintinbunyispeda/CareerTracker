@@ -10,52 +10,182 @@ import Insights from './components/Insights';
 import type { JobApplication, UserProfile } from './types';
 import { initialApplications, mockProfile } from './data/mockData';
 
+const API_BASE = 'http://localhost:8000/api';
+
 function App() {
   // State for active tab/page view
   const [activeTab, setActiveTab] = useState<'dashboard' | 'applications' | 'analytics' | 'analyzer' | 'profile' | 'insights'>('dashboard');
   
-  // State for applications list (loaded from localStorage dynamically, fallback to mock data)
-  const [applications, setApplications] = useState<JobApplication[]>(() => {
-    const cached = localStorage.getItem('careertrack_applications');
-    return cached ? JSON.parse(cached) : initialApplications;
-  });
+  // State for applications list (starts with empty array, loads from DB or local storage)
+  const [applications, setApplications] = useState<JobApplication[]>([]);
 
-  // State for user resume profile (loaded from localStorage dynamically, fallback to mock profile)
-  const [profile, setProfile] = useState<UserProfile>(() => {
-    const cached = localStorage.getItem('careertrack_profile');
-    return cached ? JSON.parse(cached) : mockProfile;
-  });
-  
-  // Sync applications data to localStorage on changes
-  useEffect(() => {
-    localStorage.setItem('careertrack_applications', JSON.stringify(applications));
-  }, [applications]);
-
-  // Sync profile details to localStorage on changes
-  useEffect(() => {
-    localStorage.setItem('careertrack_profile', JSON.stringify(profile));
-  }, [profile]);
+  // State for user resume profile (starts with mockProfile, loaded from DB or local storage)
+  const [profile, setProfile] = useState<UserProfile>(mockProfile);
   
   // Mobile sidebar drawer state
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // CRUD Operations
-  const handleAddApplication = (newApp: Omit<JobApplication, 'id'>) => {
+  // ==========================================
+  // Hybrid Initial Data Loading Effect
+  // ==========================================
+  useEffect(() => {
+    const loadInitialData = async () => {
+      let appsLoaded = false;
+      let profileLoaded = false;
+
+      // 1. Try to fetch from FastAPI Backend (Supabase or Backend RAM Cache)
+      try {
+        console.log('Attempting to fetch applications from backend...');
+        const appsRes = await fetch(`${API_BASE}/applications`);
+        if (appsRes.ok) {
+          const appsData = await appsRes.json();
+          if (Array.isArray(appsData)) {
+            setApplications(appsData);
+            appsLoaded = true;
+            console.log('Successfully loaded applications from backend.');
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API applications offline. Falling back to local storage caching.', err);
+      }
+
+      try {
+        console.log('Attempting to fetch profile from backend...');
+        const profileRes = await fetch(`${API_BASE}/profile`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData && profileData.skills) {
+            setProfile(profileData);
+            profileLoaded = true;
+            console.log('Successfully loaded profile from backend.');
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API profile offline. Falling back to local storage caching.', err);
+      }
+
+      // 2. Fallback to LocalStorage if backend requests failed
+      if (!appsLoaded) {
+        const cachedApps = localStorage.getItem('careertrack_applications');
+        if (cachedApps) {
+          setApplications(JSON.parse(cachedApps));
+        } else {
+          setApplications(initialApplications);
+        }
+      }
+
+      if (!profileLoaded) {
+        const cachedProfile = localStorage.getItem('careertrack_profile');
+        if (cachedProfile) {
+          setProfile(JSON.parse(cachedProfile));
+        } else {
+          setProfile(mockProfile);
+        }
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // ==========================================
+  // Local Backup Syncing Effects
+  // ==========================================
+  useEffect(() => {
+    if (applications.length > 0) {
+      localStorage.setItem('careertrack_applications', JSON.stringify(applications));
+    }
+  }, [applications]);
+
+  useEffect(() => {
+    if (profile && profile.skills.length > 0) {
+      localStorage.setItem('careertrack_profile', JSON.stringify(profile));
+    }
+  }, [profile]);
+
+  // ==========================================
+  // CRUD API & State Handlers
+  // ==========================================
+  
+  const handleAddApplication = async (newApp: Omit<JobApplication, 'id'>) => {
+    const createdId = Date.now().toString();
     const createdApp: JobApplication = {
       ...newApp,
-      id: Date.now().toString() // unique simple timestamp id
+      id: createdId
     };
+
+    // Staging local update first (Optimistic UI update)
     setApplications((prev) => [createdApp, ...prev]);
+
+    // Send background sync request to FastAPI
+    try {
+      const res = await fetch(`${API_BASE}/applications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdApp),
+      });
+      if (!res.ok) {
+        console.error('Failed to sync new application to backend.');
+      }
+    } catch (err) {
+      console.warn('Backend offline. Application saved locally to browser cache.', err);
+    }
   };
 
-  const handleEditApplication = (updatedApp: JobApplication) => {
+  const handleEditApplication = async (updatedApp: JobApplication) => {
+    // Optimistic local state update
     setApplications((prev) =>
       prev.map((app) => (app.id === updatedApp.id ? updatedApp : app))
     );
+
+    // Send background sync request to FastAPI
+    try {
+      const res = await fetch(`${API_BASE}/applications/${updatedApp.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedApp),
+      });
+      if (!res.ok) {
+        console.error('Failed to sync updated application to backend.');
+      }
+    } catch (err) {
+      console.warn('Backend offline. Application edits saved locally.', err);
+    }
   };
 
-  const handleDeleteApplication = (id: string) => {
+  const handleDeleteApplication = async (id: string) => {
+    // Optimistic local state update
     setApplications((prev) => prev.filter((app) => app.id !== id));
+
+    // Send background sync request to FastAPI
+    try {
+      const res = await fetch(`${API_BASE}/applications/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        console.error('Failed to delete application from backend.');
+      }
+    } catch (err) {
+      console.warn('Backend offline. Deletion queued locally.', err);
+    }
+  };
+
+  const handleUpdateProfile = async (updatedProfile: UserProfile) => {
+    // Optimistic local state update
+    setProfile(updatedProfile);
+
+    // Send background sync request to FastAPI
+    try {
+      const res = await fetch(`${API_BASE}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProfile),
+      });
+      if (!res.ok) {
+        console.error('Failed to sync updated profile to backend.');
+      }
+    } catch (err) {
+      console.warn('Backend offline. Profile edits saved locally.', err);
+    }
   };
 
   const renderActiveView = () => {
@@ -89,7 +219,7 @@ function App() {
         return (
           <MyProfile 
             profile={profile}
-            onUpdateProfile={setProfile}
+            onUpdateProfile={handleUpdateProfile}
           />
         );
       case 'insights':
