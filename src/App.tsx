@@ -27,7 +27,7 @@ const AppLoginScreen: React.FC<LoginProps> = ({ onAuthenticate }) => {
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'careertrack2026') {
+    if (password === '123345') {
       sessionStorage.setItem("ct_auth", "true");
       onAuthenticate();
     } else {
@@ -127,12 +127,6 @@ const AppLoginScreen: React.FC<LoginProps> = ({ onAuthenticate }) => {
             Authenticate Key
           </button>
         </form>
-
-        <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-            🔑 Tip: Default password is <strong>careertrack2026</strong>
-          </span>
-        </div>
       </div>
     </div>
   );

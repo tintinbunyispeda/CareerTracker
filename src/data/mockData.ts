@@ -1,70 +1,84 @@
 import type { JobApplication, UserProfile } from '../types';
 
 export const mockProfile: UserProfile = {
-  name: 'Cristine Bennett',
-  email: 'cristine.bennett@example.com',
-  phone: '(503) 555-0182',
-  website: 'https://cristinecodes.dev',
+  name: 'Cristine Valentina',
+  email: 'cristine.valentina@student.president.ac.id',
+  phone: '+62 898 002 3047',
+  website: 'linkedin.com/in/cristine-valentina',
   resumeName: 'cristine_cv_2026.pdf',
-  resumeStatus: 'Uploaded and parsed successfully on July 10, 2026',
+  resumeStatus: 'Successfully parsed CV from local database seed.',
   skills: [
+    { name: 'JavaScript', confidence: 95 },
+    { name: 'TypeScript', confidence: 90 },
+    { name: 'Python', confidence: 90 },
+    { name: 'Java', confidence: 75 },
+    { name: 'SQL', confidence: 85 },
+    { name: 'HTML', confidence: 95 },
+    { name: 'CSS', confidence: 90 },
     { name: 'React', confidence: 90 },
-    { name: 'TypeScript', confidence: 85 },
-    { name: 'JavaScript', confidence: 90 },
-    { name: 'CSS', confidence: 95 },
-    { name: 'HTML5', confidence: 95 },
-    { name: 'Git', confidence: 85 },
-    { name: 'Responsive Design', confidence: 90 },
-    { name: 'REST APIs', confidence: 80 },
-    { name: 'Figma', confidence: 75 },
-    { name: 'UI Design', confidence: 70 }
+    { name: 'FastAPI', confidence: 90 },
+    { name: 'REST APIs', confidence: 90 },
+    { name: 'PostgreSQL', confidence: 85 },
+    { name: 'MySQL', confidence: 80 },
+    { name: 'Supabase', confidence: 90 },
+    { name: 'Machine Learning', confidence: 85 },
+    { name: 'Computer Vision', confidence: 85 },
+    { name: 'YOLOv8', confidence: 80 },
+    { name: 'NLP', confidence: 75 },
+    { name: 'Git', confidence: 90 },
+    { name: 'GitHub', confidence: 90 },
+    { name: 'VS Code', confidence: 95 },
+    { name: 'Google Colab', confidence: 85 },
+    { name: 'Vercel', confidence: 85 }
   ],
   education: [
     {
       id: 'edu-1',
-      degree: 'B.S. in Computer Science',
-      school: 'Oregon State University',
-      year: '2022 - 2025'
+      degree: 'B.Sc. in Informatics (Artificial Intelligence Concentration)',
+      school: 'President University',
+      year: 'Sep 2024 - Present'
     }
   ],
   experience: [
     {
       id: 'exp-1',
-      company: 'Cloverfield Media',
-      role: 'Junior Web Developer',
-      duration: 'Nov 2025 - Present',
+      company: 'Internship & Career Center (ICC), President University',
+      role: 'Talent Acquisition',
+      duration: 'Nov 2025 - Dec 2025',
       bullets: [
-        'Maintained and styled responsive client websites using HTML, React, and Vanilla CSS.',
-        'Collaborated with designers to convert Figma visual specs into modular frontend components.',
-        'Improved website loading performance by optimizing images and refactoring CSS files.'
-      ]
-    },
-    {
-      id: 'exp-2',
-      company: 'Pinecone Tech',
-      role: 'Frontend Engineering Intern',
-      duration: 'Jun 2024 - Sep 2024',
-      bullets: [
-        'Fixed critical responsive layout bugs and visual defects across core web pages.',
-        'Wrote utility scripts in JavaScript to automate file cleaning tasks.',
-        'Participated in daily standups and code reviews with senior developer mentors.'
+        'Reviewed 1,000+ student resumes against career-readiness standards, identifying improvements in content, structure, and presentation for internship and job applications.',
+        'Evaluated student projects, achievements, and experiences to assess candidate qualifications against ICC resume standards.'
       ]
     }
   ],
   projects: [
     {
       id: 'proj-1',
-      title: 'Cozy Garden Tracker',
-      role: 'Sole Developer',
-      tech: ['React', 'CSS', 'JavaScript'],
-      description: 'A layout-focused web application for home garden planning, allowing users to layout virtual garden beds and track watering schedules.'
+      title: 'CAREERTRACK',
+      role: 'Project Owner & Frontend Developer',
+      tech: ['React', 'TypeScript', 'FastAPI', 'Supabase'],
+      description: 'Developed a responsive personal platform for tracking job applications, recruitment stages, deadlines, follow-ups, and career insights. Built and customized reusable React and TypeScript components.'
     },
     {
       id: 'proj-2',
-      title: 'Tea Corner Mock E-commerce',
-      role: 'Frontend Lead',
-      tech: ['TypeScript', 'React', 'CSS'],
-      description: 'A responsive visual prototype of a boutique tea store, incorporating product filters, checkout drawer interactions, and smooth animations.'
+      title: 'BRAINFOCUS AI',
+      role: 'Computer Vision Developer',
+      tech: ['Python', 'Computer Vision', 'Face Recognition', 'Git'],
+      description: 'Developed a facial recognition prototype using collected face datasets. Integrated the computer vision workflow from Google Colab prototype into the web application.'
+    },
+    {
+      id: 'proj-3',
+      title: 'CALORIEVISION',
+      role: 'Backend & Integration Developer',
+      tech: ['Python', 'FastAPI', 'YOLOv8', 'React', 'TypeScript'],
+      description: 'Developed backend logic to automatically aggregate calorie estimates. Integrated YOLOv8 detection outputs for Live Mode and real-time detection results.'
+    },
+    {
+      id: 'proj-4',
+      title: 'PACKWISE AI',
+      role: 'ML Recommendation Developer',
+      tech: ['Python', 'Machine Learning', 'Random Forest', 'XGBoost', 'Supabase'],
+      description: 'Designed a packaging recommendation pipeline and trained Random Forest/XGBoost models. Evaluated recommendation models using accuracy, precision, and recall.'
     }
   ]
 };
