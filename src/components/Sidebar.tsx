@@ -16,15 +16,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
   return (
     <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header">
-        <div className="sidebar-logo-icon" aria-hidden="true">
-          {/* Custom SVG logo: a little seedling/sprout representing career growth */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22V12" />
-            <path d="M12 12c0-2.8-2.2-5-5-5S2 9.2 2 12h10z" />
-            <path d="M12 12c0-2.8 2.2-5 5-5s5 2.2 5 5H12z" />
-            <path d="M12 8c0-2.2 1.8-4 4-4s4 1.8 4 4H12z" />
-          </svg>
-        </div>
+        <img 
+          src="/logo.png" 
+          alt="CareerTrack Logo" 
+          style={{ 
+            width: '28px', 
+            height: '28px', 
+            borderRadius: '6px', 
+            objectFit: 'cover',
+            marginRight: '0.2rem'
+          }} 
+        />
         <span className="sidebar-logo-text">CareerTrack</span>
       </div>
 
