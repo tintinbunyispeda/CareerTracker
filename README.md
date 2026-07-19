@@ -2,6 +2,8 @@
 
 A cozy, Notion-inspired personal job application tracker combined with an AI-driven skill demand intelligence system. Built to help developers organize their job hunt, upload screenshot postings to extract criteria, and dynamically target their learning schedules using clear, data-driven prioritization formulas.
 
+![CareerTracker Dashboard Preview](./public/dashboard_screenshot.png)
+
 ---
 
 ## 🛠 Tech Stack

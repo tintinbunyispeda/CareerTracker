@@ -41,6 +41,28 @@ else:
     logger.warning("Supabase URL/Key is missing in .env. Operating in memory fallback mode.")
 
 
+# ==========================================
+# Casing Translation Layer (React camelCase <-> PostgreSQL snake_case)
+# ==========================================
+def camel_to_snake(name: str) -> str:
+    import re
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+
+def snake_to_camel(name: str) -> str:
+    components = name.split('_')
+    return components[0] + ''.join(x.title() for x in components[1:])
+
+def map_keys_to_snake(data: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(data, dict):
+        return data
+    return {camel_to_snake(k): v for k, v in data.items()}
+
+def map_keys_to_camel(data: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(data, dict):
+        return data
+    return {snake_to_camel(k): v for k, v in data.items()}
+
+
 @app.get("/")
 def root():
     status = "Connected to Supabase" if supabase else "In-Memory Fallback Mode"
@@ -66,8 +88,8 @@ async def get_applications():
     if supabase:
         try:
             res = supabase.table("applications").select("*").execute()
-            # Sort manually or default by date
-            return res.data
+            # Translate keys back to camelCase for React
+            return [map_keys_to_camel(app) for app in res.data]
         except Exception as e:
             logger.error(f"Supabase GET applications failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -78,8 +100,10 @@ async def get_applications():
 async def create_application(app_data: Dict[str, Any]):
     if supabase:
         try:
-            res = supabase.table("applications").insert(app_data).execute()
-            return res.data[0] if res.data else app_data
+            # Translate keys to snake_case for PostgreSQL
+            snake_data = map_keys_to_snake(app_data)
+            res = supabase.table("applications").insert(snake_data).execute()
+            return map_keys_to_camel(res.data[0]) if res.data else app_data
         except Exception as e:
             logger.error(f"Supabase POST application failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -92,8 +116,10 @@ async def create_application(app_data: Dict[str, Any]):
 async def update_application(app_id: str, app_data: Dict[str, Any]):
     if supabase:
         try:
-            res = supabase.table("applications").update(app_data).eq("id", app_id).execute()
-            return res.data[0] if res.data else app_data
+            # Translate keys to snake_case for PostgreSQL
+            snake_data = map_keys_to_snake(app_data)
+            res = supabase.table("applications").update(snake_data).eq("id", app_id).execute()
+            return map_keys_to_camel(res.data[0]) if res.data else app_data
         except Exception as e:
             logger.error(f"Supabase PUT application failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -109,6 +135,7 @@ async def update_application(app_id: str, app_data: Dict[str, Any]):
 async def delete_application(app_id: str):
     if supabase:
         try:
+            # Since app_id is a primary key, it does not need translation
             supabase.table("applications").delete().eq("id", app_id).execute()
             return {"message": "Success"}
         except Exception as e:
@@ -214,13 +241,14 @@ async def get_profile():
         try:
             res = supabase.table("profiles").select("*").eq("id", "cristine").execute()
             if res.data:
-                return res.data[0]
+                return map_keys_to_camel(res.data[0])
             
             # Self-seeding: If profile doesn't exist in Supabase, create it automatically
             logger.info("Profile row 'cristine' not found in Supabase. Auto-seeding default profile data...")
-            seed_res = supabase.table("profiles").insert(DEFAULT_PROFILE).execute()
+            snake_seed = map_keys_to_snake(DEFAULT_PROFILE)
+            seed_res = supabase.table("profiles").insert(snake_seed).execute()
             if seed_res.data:
-                return seed_res.data[0]
+                return map_keys_to_camel(seed_res.data[0])
             raise HTTPException(status_code=500, detail="Failed to auto-seed profile row.")
         except Exception as e:
             logger.error(f"Supabase GET/SEED profile failed: {e}")
@@ -233,8 +261,9 @@ async def update_profile(profile_data: Dict[str, Any]):
     profile_data["id"] = "cristine" # Hardcoded default user identifier for single profile MVP
     if supabase:
         try:
-            res = supabase.table("profiles").upsert(profile_data).execute()
-            return res.data[0] if res.data else profile_data
+            snake_data = map_keys_to_snake(profile_data)
+            res = supabase.table("profiles").upsert(snake_data).execute()
+            return map_keys_to_camel(res.data[0]) if res.data else profile_data
         except Exception as e:
             logger.error(f"Supabase PUT profile failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
