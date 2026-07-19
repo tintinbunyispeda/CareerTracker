@@ -154,9 +154,9 @@ async def delete_application(app_id: str):
 DEFAULT_PROFILE = {
     "id": "cristine",
     "name": "Cristine Valentina",
-    "email": "cristine.valentina@student.president.ac.id",
-    "phone": "+62 898 002 3047",
-    "website": "linkedin.com/in/cristine-valentina",
+    "email": "your.email@student.president.ac.id",
+    "phone": "+62 812-3456-7890",
+    "website": "linkedin.com/in/your-profile",
     "resume_name": "cristine_cv_2026.pdf",
     "resume_status": "Successfully parsed CV from local database seed.",
     "skills": [

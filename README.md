@@ -2,24 +2,24 @@
 
 A cozy, Notion-inspired personal job application tracker combined with an AI-driven skill demand intelligence system. Built to help developers organize their job hunt, upload screenshot postings to extract criteria, and dynamically target their learning schedules using clear, data-driven prioritization formulas.
 
-## 📸 Galeri Tampilan Aplikasi
+## 📸 Application Gallery
 
-Berikut adalah tampilan antarmuka dan fitur-fitur utama dari **CareerTracker & SkillScope**:
+Here are the user interface screens and core features of **CareerTracker & SkillScope**:
 
-### 1. Dashboard Utama (Sistem Pemantauan)
-Menampilkan ringkasan statistik lamaran kerja, tingkat kecocokan rata-rata, upgrade index skill, dan daftar lamaran dalam status wishlist.
-![Dashboard Utama](./public/dashboard_screenshot.png)
+### 1. Main Dashboard (Monitoring System)
+Displays summary statistics of job applications, average match score, skill upgrade index, and applications in wishlist status.
+![Main Dashboard](./public/dashboard_screenshot.png)
 
-### 2. Tracker Lowongan Kerja (Applications Page)
-Daftar seluruh lamaran pekerjaan yang sedang dilacak dengan visual badge status, prioritas, dan dynamic match scoring.
+### 2. Job Tracker (Applications Page)
+A list of all tracked job applications with visual badges for status, priority, and dynamic match scoring.
 ![Applications Page](./public/application_page.png)
 
-### 3. Formulir Input Lamaran Baru (Requirement Form Modal)
-Formulir input lamaran kerja 2-Kolom modern yang diperlebar ke samping untuk menghilangkan scroll vertikal, dilengkapi auto-suggest skill tags.
+### 3. Add Application Form (Wide Modal)
+A modern 2-column job input form widened to eliminate vertical scrolling, featuring auto-suggested skill tags.
 ![Requirement Form](./public/requirement_form.png)
 
-### 4. Profil Karir & Parser CV AI (My Profile Page)
-Halaman profil karir terpadu yang menampilkan data personal, riwayat kerja, riwayat proyek, dan sistem pengunggah CV PDF yang terintegrasi ke Parser AI.
+### 4. Career Profile & AI CV Parser (My Profile Page)
+A unified career workspace showing personal details, work history, featured projects, and an drag-and-drop PDF resume parser.
 ![My Profile](./public/Profile.png)
 
 ---
@@ -121,9 +121,9 @@ INSERT INTO profiles (id, name, email, phone, website, resume_name, resume_statu
 VALUES (
   'cristine',
   'Cristine Valentina',
-  'cristine.valentina@student.president.ac.id',
-  '+62 898 002 3047',
-  'linkedin.com/in/cristine-valentina',
+  'your.email@student.president.ac.id',
+  '+62 812-3456-7890',
+  'linkedin.com/in/your-profile',
   'cristine_cv_2026.pdf',
   'Successfully parsed CV from local database seed.',
   '[{"name": "JavaScript", "confidence": 95}, {"name": "TypeScript", "confidence": 90}, {"name": "Python", "confidence": 90}, {"name": "Java", "confidence": 75}, {"name": "SQL", "confidence": 85}, {"name": "HTML", "confidence": 95}, {"name": "CSS", "confidence": 90}, {"name": "React", "confidence": 90}, {"name": "FastAPI", "confidence": 90}, {"name": "REST APIs", "confidence": 90}, {"name": "PostgreSQL", "confidence": 85}, {"name": "MySQL", "confidence": 80}, {"name": "Supabase", "confidence": 90}, {"name": "Machine Learning", "confidence": 85}, {"name": "Computer Vision", "confidence": 85}, {"name": "YOLOv8", "confidence": 80}, {"name": "NLP", "confidence": 75}, {"name": "Git", "confidence": 90}, {"name": "GitHub", "confidence": 90}, {"name": "VS Code", "confidence": 95}, {"name": "Google Colab", "confidence": 85}, {"name": "Vercel", "confidence": 85}]'::jsonb,

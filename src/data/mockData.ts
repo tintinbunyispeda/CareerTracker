@@ -2,9 +2,9 @@ import type { JobApplication, UserProfile } from '../types';
 
 export const mockProfile: UserProfile = {
   name: 'Cristine Valentina',
-  email: 'cristine.valentina@student.president.ac.id',
-  phone: '+62 898 002 3047',
-  website: 'linkedin.com/in/cristine-valentina',
+  email: 'your.email@student.president.ac.id',
+  phone: '+62 812-3456-7890',
+  website: 'linkedin.com/in/your-profile',
   resumeName: 'cristine_cv_2026.pdf',
   resumeStatus: 'Successfully parsed CV from local database seed.',
   skills: [
