@@ -126,41 +126,86 @@ async def delete_application(app_id: str):
 
 DEFAULT_PROFILE = {
     "id": "cristine",
-    "name": "Cristine Bennett",
-    "email": "cristine.bennett@example.com",
-    "phone": "(503) 555-0182",
-    "website": "https://cristinecodes.dev",
+    "name": "Cristine Valentina",
+    "email": "cristine.valentina@student.president.ac.id",
+    "phone": "+62 898 002 3047",
+    "website": "linkedin.com/in/cristine-valentina",
     "resume_name": "cristine_cv_2026.pdf",
-    "resume_status": "Uploaded and parsed successfully on July 10, 2026",
+    "resume_status": "Successfully parsed CV from local database seed.",
     "skills": [
+        {"name": "JavaScript", "confidence": 95},
+        {"name": "TypeScript", "confidence": 90},
+        {"name": "Python", "confidence": 90},
+        {"name": "Java", "confidence": 75},
+        {"name": "SQL", "confidence": 85},
+        {"name": "HTML", "confidence": 95},
+        {"name": "CSS", "confidence": 90},
         {"name": "React", "confidence": 90},
-        {"name": "TypeScript", "confidence": 85},
-        {"name": "JavaScript", "confidence": 90},
-        {"name": "CSS", "confidence": 95},
-        {"name": "HTML5", "confidence": 95},
-        {"name": "Git", "confidence": 85},
-        {"name": "Responsive Design", "confidence": 90},
-        {"name": "REST APIs", "confidence": 80},
-        {"name": "Figma", "confidence": 75},
-        {"name": "UI Design", "confidence": 70}
+        {"name": "FastAPI", "confidence": 90},
+        {"name": "REST APIs", "confidence": 90},
+        {"name": "PostgreSQL", "confidence": 85},
+        {"name": "MySQL", "confidence": 80},
+        {"name": "Supabase", "confidence": 90},
+        {"name": "Machine Learning", "confidence": 85},
+        {"name": "Computer Vision", "confidence": 85},
+        {"name": "YOLOv8", "confidence": 80},
+        {"name": "NLP", "confidence": 75},
+        {"name": "Git", "confidence": 90},
+        {"name": "GitHub", "confidence": 90},
+        {"name": "VS Code", "confidence": 95},
+        {"name": "Google Colab", "confidence": 85},
+        {"name": "Vercel", "confidence": 85}
     ],
     "education": [
-        {"id": "edu-1", "degree": "B.S. in Computer Science", "school": "Oregon State University", "year": "2022 - 2025"}
+        {
+            "id": "edu-1",
+            "degree": "B.Sc. in Informatics (Artificial Intelligence Concentration)",
+            "school": "President University",
+            "year": "Sep 2024 - Present"
+        }
     ],
     "experience": [
         {
             "id": "exp-1",
-            "company": "Cloverfield Media",
-            "role": "Junior Web Developer",
-            "duration": "Nov 2025 - Present",
+            "company": "Internship & Career Center (ICC), President University",
+            "role": "Talent Acquisition",
+            "duration": "Nov 2025 - Dec 2025",
             "bullets": [
-                "Maintained and styled responsive client websites using HTML, React, and Vanilla CSS.",
-                "Collaborated with designers to convert Figma visual specs into modular frontend components.",
-                "Improved website loading performance by optimizing images and refactoring CSS files."
+                "Reviewed 1,000+ student resumes against career-readiness standards, identifying improvements in content, structure, and presentation for internship and job applications.",
+                "Evaluated student projects, achievements, and experiences to assess candidate qualifications against ICC resume standards."
             ]
         }
     ],
-    "projects": []
+    "projects": [
+        {
+            "id": "proj-1",
+            "title": "CAREERTRACK",
+            "role": "Project Owner & Frontend Developer",
+            "tech": ["React", "TypeScript", "FastAPI", "Supabase"],
+            "description": "Developed a responsive personal platform for tracking job applications, recruitment stages, deadlines, follow-ups, and career insights. Built and customized reusable React and TypeScript components. Currently developing database integration."
+        },
+        {
+            "id": "proj-2",
+            "title": "BRAINFOCUS AI",
+            "role": "Computer Vision Developer",
+            "tech": ["Python", "Computer Vision", "Face Recognition", "Git"],
+            "description": "Developed a facial recognition prototype using collected face datasets. Integrated the computer vision workflow from Google Colab prototype into the web application."
+        },
+        {
+            "id": "proj-3",
+            "title": "CALORIEVISION",
+            "role": "Backend & Integration Developer",
+            "tech": ["Python", "FastAPI", "YOLOv8", "React", "TypeScript"],
+            "description": "Developed backend logic to automatically aggregate calorie estimates. Integrated YOLOv8 detection outputs for Live Mode and real-time detection results."
+        },
+        {
+            "id": "proj-4",
+            "title": "PACKWISE AI",
+            "role": "ML Recommendation Developer",
+            "tech": ["Python", "Machine Learning", "Random Forest", "XGBoost", "Supabase"],
+            "description": "Designed a packaging recommendation pipeline and trained Random Forest/XGBoost models. Evaluated recommendation models using accuracy, precision, and recall."
+        }
+    ]
 }
 
 @app.get("/api/profile")
