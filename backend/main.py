@@ -124,6 +124,45 @@ async def delete_application(app_id: str):
 # FastAPI Endpoints for User Profile
 # ==========================================
 
+DEFAULT_PROFILE = {
+    "id": "cristine",
+    "name": "Cristine Bennett",
+    "email": "cristine.bennett@example.com",
+    "phone": "(503) 555-0182",
+    "website": "https://cristinecodes.dev",
+    "resume_name": "cristine_cv_2026.pdf",
+    "resume_status": "Uploaded and parsed successfully on July 10, 2026",
+    "skills": [
+        {"name": "React", "confidence": 90},
+        {"name": "TypeScript", "confidence": 85},
+        {"name": "JavaScript", "confidence": 90},
+        {"name": "CSS", "confidence": 95},
+        {"name": "HTML5", "confidence": 95},
+        {"name": "Git", "confidence": 85},
+        {"name": "Responsive Design", "confidence": 90},
+        {"name": "REST APIs", "confidence": 80},
+        {"name": "Figma", "confidence": 75},
+        {"name": "UI Design", "confidence": 70}
+    ],
+    "education": [
+        {"id": "edu-1", "degree": "B.S. in Computer Science", "school": "Oregon State University", "year": "2022 - 2025"}
+    ],
+    "experience": [
+        {
+            "id": "exp-1",
+            "company": "Cloverfield Media",
+            "role": "Junior Web Developer",
+            "duration": "Nov 2025 - Present",
+            "bullets": [
+                "Maintained and styled responsive client websites using HTML, React, and Vanilla CSS.",
+                "Collaborated with designers to convert Figma visual specs into modular frontend components.",
+                "Improved website loading performance by optimizing images and refactoring CSS files."
+            ]
+        }
+    ],
+    "projects": []
+}
+
 @app.get("/api/profile")
 async def get_profile():
     if supabase:
@@ -131,10 +170,15 @@ async def get_profile():
             res = supabase.table("profiles").select("*").eq("id", "cristine").execute()
             if res.data:
                 return res.data[0]
-            # If database is connected but row doesn't exist, we return 404
-            raise HTTPException(status_code=404, detail="Profile not found in Supabase. Please run seed script.")
+            
+            # Self-seeding: If profile doesn't exist in Supabase, create it automatically
+            logger.info("Profile row 'cristine' not found in Supabase. Auto-seeding default profile data...")
+            seed_res = supabase.table("profiles").insert(DEFAULT_PROFILE).execute()
+            if seed_res.data:
+                return seed_res.data[0]
+            raise HTTPException(status_code=500, detail="Failed to auto-seed profile row.")
         except Exception as e:
-            logger.error(f"Supabase GET profile failed: {e}")
+            logger.error(f"Supabase GET/SEED profile failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     return memory_profile
 
