@@ -555,11 +555,12 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
         isOpen={isFormOpen} 
         onClose={closeFormModal} 
         title={editingId ? 'Edit Application' : 'Track New Application'}
+        isWide={true}
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {!editingId && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 -0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0' }}>
               <button 
                 type="button" 
                 className="btn" 
@@ -581,354 +582,351 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
             </div>
           )}
 
-          <h4 style={{ margin: '0 0 -0.5rem', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.25rem', color: 'var(--color-text-secondary)' }}>
-            OVERVIEW
-          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            
+            {/* Left Column: Overview Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.25rem', color: 'var(--color-text-secondary)', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                OVERVIEW DETAILS
+              </h4>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Company Name *</label>
-              <input
-                type="text"
-                name="company"
-                className="form-control"
-                placeholder="e.g. Sage Creative Studio"
-                value={formData.company}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Job Position *</label>
-              <input
-                type="text"
-                name="position"
-                className="form-control"
-                placeholder="e.g. UI Developer"
-                value={formData.position}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Company Name *</label>
+                <input
+                  type="text"
+                  name="company"
+                  className="form-control"
+                  placeholder="e.g. Sage Creative Studio"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Job Link URL</label>
-              <input
-                type="url"
-                name="jobLink"
-                className="form-control"
-                placeholder="https://company.com/careers"
-                value={formData.jobLink}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Job Location *</label>
-              <input
-                type="text"
-                name="location"
-                className="form-control"
-                placeholder="e.g. Remote, Portland OR"
-                value={formData.location}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Job Position *</label>
+                <input
+                  type="text"
+                  name="position"
+                  className="form-control"
+                  placeholder="e.g. UI Developer"
+                  value={formData.position}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Work Type</label>
-              <select
-                name="workType"
-                className="form-control"
-                value={formData.workType}
-                onChange={handleInputChange}
-              >
-                <option value="Remote">Remote</option>
-                <option value="Hybrid">Hybrid</option>
-                <option value="Onsite">Onsite</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Status</label>
-              <select
-                name="status"
-                className="form-control"
-                value={formData.status}
-                onChange={handleInputChange}
-              >
-                <option value="Wishlist">Wishlist</option>
-                <option value="Applied">Applied</option>
-                <option value="Interviewing">Interviewing</option>
-                <option value="Offer">Offer</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Job Link URL</label>
+                <input
+                  type="url"
+                  name="jobLink"
+                  className="form-control"
+                  placeholder="https://company.com/careers"
+                  value={formData.jobLink}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Priority</label>
-              <select
-                name="priority"
-                className="form-control"
-                value={formData.priority}
-                onChange={handleInputChange}
-              >
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
-             <div className="form-group">
-              <label className="form-label">Match Score</label>
-              <div 
-                style={{ 
-                  padding: '0.45rem 0.75rem', 
-                  borderRadius: '6px', 
-                  backgroundColor: 'var(--bg-sidebar)', 
-                  border: '1px solid var(--color-border)',
-                  fontSize: '0.85rem',
-                  color: 'var(--color-text-secondary)',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  height: '38px',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <span>⚡</span> Calculated automatically
+              <div className="form-group">
+                <label className="form-label">Job Location *</label>
+                <input
+                  type="text"
+                  name="location"
+                  className="form-control"
+                  placeholder="e.g. Remote, Portland OR"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Work Type</label>
+                <select
+                  name="workType"
+                  className="form-control"
+                  value={formData.workType}
+                  onChange={handleInputChange}
+                >
+                  <option value="Remote">Remote</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Onsite">Onsite</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select
+                  name="status"
+                  className="form-control"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                >
+                  <option value="Wishlist">Wishlist</option>
+                  <option value="Applied">Applied</option>
+                  <option value="Interviewing">Interviewing</option>
+                  <option value="Offer">Offer</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Priority</label>
+                <select
+                  name="priority"
+                  className="form-control"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Match Score</label>
+                <div 
+                  style={{ 
+                    padding: '0.45rem 0.75rem', 
+                    borderRadius: '6px', 
+                    backgroundColor: 'var(--bg-sidebar)', 
+                    border: '1px solid var(--color-border)',
+                    fontSize: '0.85rem',
+                    color: 'var(--color-text-secondary)',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    height: '38px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <span>⚡</span> Calculated automatically
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Date Found *</label>
+                <input
+                  type="date"
+                  name="dateFound"
+                  className="form-control"
+                  value={formData.dateFound}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Date Applied</label>
+                <input
+                  type="date"
+                  name="dateApplied"
+                  className="form-control"
+                  value={formData.dateApplied}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Upcoming Deadline</label>
+                <input
+                  type="date"
+                  name="deadline"
+                  className="form-control"
+                  value={formData.deadline}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Follow-Up Date</label>
+                <input
+                  type="date"
+                  name="followUpDate"
+                  className="form-control"
+                  value={formData.followUpDate}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Next Action Step</label>
+                <input
+                  type="text"
+                  name="nextAction"
+                  className="form-control"
+                  placeholder="e.g. Follow up on Tuesday"
+                  value={formData.nextAction}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Date Found *</label>
-              <input
-                type="date"
-                name="dateFound"
-                className="form-control"
-                value={formData.dateFound}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Date Applied</label>
-              <input
-                type="date"
-                name="dateApplied"
-                className="form-control"
-                value={formData.dateApplied}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+            {/* Right Column: AI Extraction & Bullet Lists */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <h4 style={{ margin: '0 0 0.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.25rem', color: 'var(--color-text-secondary)', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                AI DETAILS & REQUIREMENTS
+              </h4>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Deadline Date</label>
-              <input
-                type="date"
-                name="deadline"
-                className="form-control"
-                value={formData.deadline}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Follow-Up Date</label>
-              <input
-                type="date"
-                name="followUpDate"
-                className="form-control"
-                value={formData.followUpDate}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Screenshot Image DataURL / URL</label>
+                <input
+                  type="text"
+                  name="screenshot"
+                  className="form-control"
+                  placeholder="data:image/png;base64,... or filepath"
+                  value={formData.screenshot}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">Next Action Step</label>
-              <input
-                type="text"
-                name="nextAction"
-                className="form-control"
-                placeholder="e.g. Follow up on Tuesday"
-                value={formData.nextAction}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Required Skills (comma separated)</label>
+                <input
+                  type="text"
+                  name="requiredSkills"
+                  className="form-control"
+                  placeholder="React, TypeScript, CSS"
+                  value={formData.requiredSkills}
+                  onChange={handleInputChange}
+                />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem', maxHeight: '72px', overflowY: 'auto', padding: '0.2rem', border: '1px solid var(--color-border)', borderRadius: '6px' }}>
+                  {getSuggestedSkills().map(skill => {
+                    const isSelected = (formData.requiredSkills || '')
+                      .split(',')
+                      .map((s: string) => s.trim().toLowerCase())
+                      .includes(skill.toLowerCase());
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => handleToggleSkill('requiredSkills', skill)}
+                        className={`badge ${isSelected ? 'badge-interviewing' : 'badge-applied'}`}
+                        style={{ 
+                          cursor: 'pointer', 
+                          border: '1px solid var(--color-border)', 
+                          padding: '0.15rem 0.4rem', 
+                          fontSize: '0.7rem',
+                          background: isSelected ? 'var(--sage-green)' : 'var(--bg-primary)',
+                          color: isSelected ? 'white' : 'var(--color-text)',
+                          borderRadius: '12px',
+                          outline: 'none'
+                        }}
+                      >
+                        {isSelected ? '✓' : '+'} {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <h4 style={{ margin: '1rem 0 -0.5rem', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.25rem', color: 'var(--color-text-secondary)' }}>
-            AI METADATA & ARRAYS
-          </h4>
+              <div className="form-group">
+                <label className="form-label">Preferred Skills (comma separated)</label>
+                <input
+                  type="text"
+                  name="preferredSkills"
+                  className="form-control"
+                  placeholder="Next.js, Docker"
+                  value={formData.preferredSkills}
+                  onChange={handleInputChange}
+                />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem', maxHeight: '72px', overflowY: 'auto', padding: '0.2rem', border: '1px solid var(--color-border)', borderRadius: '6px' }}>
+                  {getSuggestedSkills().map(skill => {
+                    const isSelected = (formData.preferredSkills || '')
+                      .split(',')
+                      .map((s: string) => s.trim().toLowerCase())
+                      .includes(skill.toLowerCase());
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => handleToggleSkill('preferredSkills', skill)}
+                        className={`badge ${isSelected ? 'badge-applied' : 'badge-applied'}`}
+                        style={{ 
+                          cursor: 'pointer', 
+                          border: '1px solid var(--color-border)', 
+                          padding: '0.15rem 0.4rem', 
+                          fontSize: '0.7rem',
+                          background: isSelected ? 'var(--ochre)' : 'var(--bg-primary)',
+                          color: isSelected ? 'white' : 'var(--color-text)',
+                          borderRadius: '12px',
+                          outline: 'none'
+                        }}
+                      >
+                        {isSelected ? '✓' : '+'} {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <div className="form-row">
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">Screenshot Image DataURL / URL</label>
-              <input
-                type="text"
-                name="screenshot"
-                className="form-control"
-                placeholder="data:image/png;base64,... or filepath"
-                value={formData.screenshot}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+              <div className="form-group">
+                <label className="form-label">Skill Gaps (comma separated)</label>
+                <input
+                  type="text"
+                  name="skillGaps"
+                  className="form-control"
+                  placeholder="GraphQL, Next.js"
+                  value={formData.skillGaps}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Required Skills (comma separated)</label>
-              <input
-                type="text"
-                name="requiredSkills"
-                className="form-control"
-                placeholder="React, TypeScript, CSS"
-                value={formData.requiredSkills}
-                onChange={handleInputChange}
-              />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem' }}>
-                {getSuggestedSkills().map(skill => {
-                  const isSelected = (formData.requiredSkills || '')
-                    .split(',')
-                    .map((s: string) => s.trim().toLowerCase())
-                    .includes(skill.toLowerCase());
-                  return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => handleToggleSkill('requiredSkills', skill)}
-                      className={`badge ${isSelected ? 'badge-interviewing' : 'badge-applied'}`}
-                      style={{ 
-                        cursor: 'pointer', 
-                        border: '1px solid var(--color-border)', 
-                        padding: '0.15rem 0.4rem', 
-                        fontSize: '0.7rem',
-                        background: isSelected ? 'var(--sage-green)' : 'var(--bg-primary)',
-                        color: isSelected ? 'white' : 'var(--color-text)',
-                        borderRadius: '12px',
-                        outline: 'none'
-                      }}
-                    >
-                      {isSelected ? '✓' : '+'} {skill}
-                    </button>
-                  );
-                })}
+              <div className="form-group">
+                <label className="form-label">Job Requirements (one per line)</label>
+                <textarea
+                  name="requirements"
+                  className="form-control"
+                  rows={2}
+                  placeholder="Requirement A&#10;Requirement B"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Responsibilities (one per line)</label>
+                <textarea
+                  name="responsibilities"
+                  className="form-control"
+                  rows={2}
+                  placeholder="Task A&#10;Task B"
+                  value={formData.responsibilities}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Benefits & Perks (one per line)</label>
+                <textarea
+                  name="benefits"
+                  className="form-control"
+                  rows={2}
+                  placeholder="Benefit A&#10;Benefit B"
+                  value={formData.benefits}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Notes & Comments</label>
+                <textarea
+                  name="notes"
+                  className="form-control"
+                  rows={2}
+                  placeholder="Personal logs..."
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Preferred Skills (comma separated)</label>
-              <input
-                type="text"
-                name="preferredSkills"
-                className="form-control"
-                placeholder="Next.js, Docker"
-                value={formData.preferredSkills}
-                onChange={handleInputChange}
-              />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem' }}>
-                {getSuggestedSkills().map(skill => {
-                  const isSelected = (formData.preferredSkills || '')
-                    .split(',')
-                    .map((s: string) => s.trim().toLowerCase())
-                    .includes(skill.toLowerCase());
-                  return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => handleToggleSkill('preferredSkills', skill)}
-                      className={`badge ${isSelected ? 'badge-applied' : 'badge-applied'}`}
-                      style={{ 
-                        cursor: 'pointer', 
-                        border: '1px solid var(--color-border)', 
-                        padding: '0.15rem 0.4rem', 
-                        fontSize: '0.7rem',
-                        background: isSelected ? 'var(--ochre)' : 'var(--bg-primary)',
-                        color: isSelected ? 'white' : 'var(--color-text)',
-                        borderRadius: '12px',
-                        outline: 'none'
-                      }}
-                    >
-                      {isSelected ? '✓' : '+'} {skill}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+
           </div>
 
-          <div className="form-row">
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">Skill Gaps (comma separated)</label>
-              <input
-                type="text"
-                name="skillGaps"
-                className="form-control"
-                placeholder="GraphQL, Next.js"
-                value={formData.skillGaps}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Job Requirements (one per line)</label>
-            <textarea
-              name="requirements"
-              className="form-control"
-              rows={3}
-              placeholder="Requirement A&#10;Requirement B"
-              value={formData.requirements}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Responsibilities (one per line)</label>
-            <textarea
-              name="responsibilities"
-              className="form-control"
-              rows={3}
-              placeholder="Task A&#10;Task B"
-              value={formData.responsibilities}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Benefits & Perks (one per line)</label>
-            <textarea
-              name="benefits"
-              className="form-control"
-              rows={3}
-              placeholder="Benefit A&#10;Benefit B"
-              value={formData.benefits}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Notes & Comments</label>
-            <textarea
-              name="notes"
-              className="form-control"
-              rows={2}
-              placeholder="Personal logs..."
-              value={formData.notes}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="modal-footer" style={{ borderTop: 'none', paddingRight: 0, paddingBottom: 0 }}>
+          <div className="modal-footer" style={{ borderTop: '1px solid var(--color-border)', padding: '1rem 0 0', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button type="button" className="btn btn-secondary" onClick={closeFormModal}>
               Cancel
             </button>

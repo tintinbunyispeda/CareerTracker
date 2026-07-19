@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  isWide?: boolean; // Optional prop to make the modal wider (950px max)
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, isWide = false }) => {
   // Listen for Escape key to close the modal
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -36,7 +37,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-container" role="dialog" aria-modal="true">
+      <div className={`modal-container ${isWide ? 'wide' : ''}`} role="dialog" aria-modal="true">
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
           <button 
