@@ -250,12 +250,14 @@ function App() {
   // CRUD API Handlers
   // ==========================================
   
-  const getAuthHeaders = () => {
-    if (!session) return { 'Content-Type': 'application/json' };
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
     };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+    return headers;
   };
   
   const handleAddApplication = async (newApp: Omit<JobApplication, 'id'>) => {
