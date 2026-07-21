@@ -16,8 +16,13 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
 
   // Magic Import States
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importText, setImportText] = useState('');
+  const [importText, setImportText] = useState(() => localStorage.getItem('magicImportProfile') || '');
   const [importError, setImportError] = useState('');
+
+  const handleImportTextChange = (val: string) => {
+    setImportText(val);
+    localStorage.setItem('magicImportProfile', val);
+  };
 
   const handleMagicImport = () => {
     try {
@@ -35,6 +40,7 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
       });
       setIsImportModalOpen(false);
       setImportText('');
+      localStorage.removeItem('magicImportProfile');
       setImportError('');
       alert("Successfully updated profile from JSON!");
     } catch (e: any) {
@@ -752,7 +758,7 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
               rows={8} 
               placeholder='&#123; "name": "...", "skills": [...] &#125;'
               value={importText}
-              onChange={(e) => setImportText(e.target.value)}
+              onChange={(e) => handleImportTextChange(e.target.value)}
               style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
             />
           </div>

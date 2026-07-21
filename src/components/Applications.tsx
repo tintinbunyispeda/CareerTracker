@@ -51,8 +51,13 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
 
   // Magic Import States
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importText, setImportText] = useState('');
+  const [importText, setImportText] = useState(() => localStorage.getItem('magicImportApps') || '');
   const [importError, setImportError] = useState('');
+
+  const handleImportTextChange = (val: string) => {
+    setImportText(val);
+    localStorage.setItem('magicImportApps', val);
+  };
 
   // Expanded card details tracker
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
@@ -169,6 +174,7 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
       
       setIsImportModalOpen(false);
       setImportText('');
+      localStorage.removeItem('magicImportApps');
       setImportError('');
       alert(`Successfully queued ${apps.length} application(s) for import!`);
     } catch (e: any) {
@@ -1026,17 +1032,26 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
           <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-sidebar)', borderRadius: '6px', fontSize: '0.85rem' }}>
             <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>Copy & Paste this prompt to ChatGPT/Claude:</p>
             <div style={{ backgroundColor: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontSize: '0.75rem', overflowX: 'auto', whiteSpace: 'pre-wrap', color: 'var(--color-text)', userSelect: 'all' }}>
-              Create a JSON array of 3 job applications for [Your Role]. Do NOT use markdown code blocks. Return ONLY valid JSON.
-              Use this structure:
+              Act as an expert job parser. I will provide you with a screenshot or text of a job listing. Convert the information strictly into a JSON array of job applications.
+              
+              CRITICAL RULES:
+              1. Extract "requirements" (minimum duration/experience), "requiredSkills", "preferredSkills" (if any), non-skill requirements, and "responsibilities".
+              2. DO NOT hallucinate. If a field is not present in the screenshot, leave it empty. Do not guess.
+              3. DO NOT generate match scores, skill gaps, or explanations. Just pure data.
+              4. Return ONLY valid JSON without markdown code blocks.
+              
+              Structure:
               [
                 &#123;
-                  "company": "Tech Corp",
-                  "position": "Frontend Developer",
-                  "location": "Remote",
-                  "workType": "Remote",
+                  "company": "Company Name",
+                  "position": "Job Title",
+                  "location": "Location",
+                  "workType": "Remote/Hybrid",
                   "status": "Wishlist",
-                  "requiredSkills": ["React", "TypeScript", "Tailwind"],
-                  "preferredSkills": ["Figma", "Node.js"]
+                  "requiredSkills": ["React", "TypeScript"],
+                  "preferredSkills": ["Figma"],
+                  "requirements": ["3+ years of experience", "Bachelor's degree in CS"],
+                  "responsibilities": ["Develop UI components"]
                 &#125;
               ]
             </div>
@@ -1052,7 +1067,7 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
               rows={8} 
               placeholder='[ { ... } ]'
               value={importText}
-              onChange={(e) => setImportText(e.target.value)}
+              onChange={(e) => handleImportTextChange(e.target.value)}
               style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
             />
           </div>
