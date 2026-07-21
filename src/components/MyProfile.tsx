@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types';
+import Modal from './Modal';
 
 interface MyProfileProps {
   profile: UserProfile;
@@ -12,6 +13,34 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
   
   // Drag and drop visual indicator state
   const [isDragging, setIsDragging] = useState(false);
+
+  // Magic Import States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importError, setImportError] = useState('');
+
+  const handleMagicImport = () => {
+    try {
+      const data = JSON.parse(importText);
+      onUpdateProfile({
+        ...profile,
+        name: data.name || profile.name,
+        email: data.email || profile.email,
+        phone: data.phone || profile.phone,
+        website: data.website || profile.website,
+        skills: data.skills ? data.skills.map((s:any) => ({ name: s.name || s, confidence: s.confidence || 85 })) : profile.skills,
+        education: data.education ? data.education.map((e:any, i:number) => ({ ...e, id: `edu-${Date.now()}-${i}` })) : profile.education,
+        experience: data.experience ? data.experience.map((e:any, i:number) => ({ ...e, id: `exp-${Date.now()}-${i}` })) : profile.experience,
+        projects: data.projects ? data.projects.map((p:any, i:number) => ({ ...p, id: `proj-${Date.now()}-${i}` })) : profile.projects
+      });
+      setIsImportModalOpen(false);
+      setImportText('');
+      setImportError('');
+      alert("Successfully updated profile from JSON!");
+    } catch (e: any) {
+      setImportError(`Invalid JSON format: ${e.message}`);
+    }
+  };
 
   // General profile field updater
   const updateField = <K extends keyof UserProfile>(name: K, value: UserProfile[K]) => {
@@ -250,6 +279,9 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
           <h1>My Career Profile</h1>
           <p className="header-subtitle">Manage your resume details and skill list for AI comparisons.</p>
         </div>
+        <button className="btn btn-secondary" onClick={() => setIsImportModalOpen(true)} style={{ backgroundColor: 'var(--sage-green-light)', borderColor: 'var(--sage-green)', color: 'var(--sage-green-dark)' }}>
+          ✨ Magic Import
+        </button>
       </div>
 
       <div className="profile-layout-grid">
@@ -671,6 +703,54 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
 
         </div>
       </div>
+
+      {/* Magic Import Modal */}
+      <Modal 
+        isOpen={isImportModalOpen} 
+        onClose={() => { setIsImportModalOpen(false); setImportError(''); }} 
+        title="✨ Magic Import Profile with AI"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-sidebar)', borderRadius: '6px', fontSize: '0.85rem' }}>
+            <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>Copy & Paste this prompt to ChatGPT/Claude:</p>
+            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontSize: '0.75rem', overflowX: 'auto', whiteSpace: 'pre-wrap', color: 'var(--color-text)', userSelect: 'all' }}>
+              Create a JSON object for my professional profile. Do NOT use markdown code blocks. Return ONLY valid JSON.
+              Use this structure:
+              &#123;
+                "name": "My Name",
+                "email": "email@example.com",
+                "phone": "123-456-7890",
+                "skills": [&#123; "name": "React", "confidence": 90 &#125;],
+                "education": [&#123; "degree": "B.Sc.", "school": "University", "year": "2024" &#125;],
+                "experience": [&#123; "company": "Company", "role": "Role", "duration": "2020-2024", "bullets": ["Did this", "Did that"] &#125;],
+                "projects": [&#123; "title": "Project", "role": "Lead", "tech": ["React"], "description": "Desc" &#125;]
+              &#125;
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Paste JSON output here:</label>
+            <textarea 
+              className="form-control" 
+              rows={8} 
+              placeholder='&#123; "name": "...", "skills": [...] &#125;'
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+            />
+          </div>
+
+          {importError && (
+            <p style={{ color: 'var(--color-rejected)', fontSize: '0.85rem', margin: 0 }}>⚠️ {importError}</p>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={() => setIsImportModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleMagicImport}>Import JSON</button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 };

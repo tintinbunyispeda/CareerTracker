@@ -1,8 +1,11 @@
 import os
 import logging
+import json
+import time
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import create_client, Client
 
 from services.ai_services import analyze_job_screenshot
@@ -40,6 +43,18 @@ if supabase_url and supabase_key and "your_supabase" not in supabase_url:
 else:
     logger.warning("Supabase URL/Key is missing in .env. Operating in memory fallback mode.")
 
+security = HTTPBearer()
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not supabase:
+        return {"id": "memory_user"}
+    try:
+        res = supabase.auth.get_user(credentials.credentials)
+        if res and res.user:
+            return res.user
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication error: {e}")
 
 # ==========================================
 # Casing Translation Layer (React camelCase <-> PostgreSQL snake_case)
@@ -70,7 +85,7 @@ def root():
 
 
 @app.post("/analyze-job")
-async def analyze_job(file: UploadFile = File(...)):
+async def analyze_job(file: UploadFile = File(...), user=Depends(get_current_user)):
     image_bytes = await file.read()
     result = analyze_job_screenshot(
         image_bytes=image_bytes,
@@ -84,10 +99,11 @@ async def analyze_job(file: UploadFile = File(...)):
 # ==========================================
 
 @app.get("/api/applications")
-async def get_applications():
+async def get_applications(user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
     if supabase:
         try:
-            res = supabase.table("applications").select("*").execute()
+            res = supabase.table("applications").select("*").eq("user_id", user_id).execute()
             # Translate keys back to camelCase for React
             return [map_keys_to_camel(app) for app in res.data]
         except Exception as e:
@@ -97,11 +113,13 @@ async def get_applications():
 
 
 @app.post("/api/applications")
-async def create_application(app_data: Dict[str, Any]):
+async def create_application(app_data: Dict[str, Any], user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
     if supabase:
         try:
             # Translate keys to snake_case for PostgreSQL
             snake_data = map_keys_to_snake(app_data)
+            snake_data["user_id"] = user_id
             res = supabase.table("applications").insert(snake_data).execute()
             return map_keys_to_camel(res.data[0]) if res.data else app_data
         except Exception as e:
@@ -113,12 +131,12 @@ async def create_application(app_data: Dict[str, Any]):
 
 
 @app.put("/api/applications/{app_id}")
-async def update_application(app_id: str, app_data: Dict[str, Any]):
+async def update_application(app_id: str, app_data: Dict[str, Any], user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
     if supabase:
         try:
-            # Translate keys to snake_case for PostgreSQL
             snake_data = map_keys_to_snake(app_data)
-            res = supabase.table("applications").update(snake_data).eq("id", app_id).execute()
+            res = supabase.table("applications").update(snake_data).eq("id", app_id).eq("user_id", user_id).execute()
             return map_keys_to_camel(res.data[0]) if res.data else app_data
         except Exception as e:
             logger.error(f"Supabase PUT application failed: {e}")
@@ -132,11 +150,11 @@ async def update_application(app_id: str, app_data: Dict[str, Any]):
 
 
 @app.delete("/api/applications/{app_id}")
-async def delete_application(app_id: str):
+async def delete_application(app_id: str, user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
     if supabase:
         try:
-            # Since app_id is a primary key, it does not need translation
-            supabase.table("applications").delete().eq("id", app_id).execute()
+            supabase.table("applications").delete().eq("id", app_id).eq("user_id", user_id).execute()
             return {"message": "Success"}
         except Exception as e:
             logger.error(f"Supabase DELETE application failed: {e}")
@@ -151,114 +169,26 @@ async def delete_application(app_id: str):
 # FastAPI Endpoints for User Profile
 # ==========================================
 
-DEFAULT_PROFILE = {
-    "id": "cristine",
-    "name": "Cristine Valentina",
-    "email": "your.email@student.president.ac.id",
-    "phone": "+62 812-3456-7890",
-    "website": "linkedin.com/in/your-profile",
-    "resume_name": "cristine_cv_2026.pdf",
-    "resume_status": "Successfully parsed CV from local database seed.",
-    "skills": [
-        {"name": "JavaScript", "confidence": 95},
-        {"name": "TypeScript", "confidence": 90},
-        {"name": "Python", "confidence": 90},
-        {"name": "Java", "confidence": 75},
-        {"name": "SQL", "confidence": 85},
-        {"name": "HTML", "confidence": 95},
-        {"name": "CSS", "confidence": 90},
-        {"name": "React", "confidence": 90},
-        {"name": "FastAPI", "confidence": 90},
-        {"name": "REST APIs", "confidence": 90},
-        {"name": "PostgreSQL", "confidence": 85},
-        {"name": "MySQL", "confidence": 80},
-        {"name": "Supabase", "confidence": 90},
-        {"name": "Machine Learning", "confidence": 85},
-        {"name": "Computer Vision", "confidence": 85},
-        {"name": "YOLOv8", "confidence": 80},
-        {"name": "NLP", "confidence": 75},
-        {"name": "Git", "confidence": 90},
-        {"name": "GitHub", "confidence": 90},
-        {"name": "VS Code", "confidence": 95},
-        {"name": "Google Colab", "confidence": 85},
-        {"name": "Vercel", "confidence": 85}
-    ],
-    "education": [
-        {
-            "id": "edu-1",
-            "degree": "B.Sc. in Informatics (Artificial Intelligence Concentration)",
-            "school": "President University",
-            "year": "Sep 2024 - Present"
-        }
-    ],
-    "experience": [
-        {
-            "id": "exp-1",
-            "company": "Internship & Career Center (ICC), President University",
-            "role": "Talent Acquisition",
-            "duration": "Nov 2025 - Dec 2025",
-            "bullets": [
-                "Reviewed 1,000+ student resumes against career-readiness standards, identifying improvements in content, structure, and presentation for internship and job applications.",
-                "Evaluated student projects, achievements, and experiences to assess candidate qualifications against ICC resume standards."
-            ]
-        }
-    ],
-    "projects": [
-        {
-            "id": "proj-1",
-            "title": "CAREERTRACK",
-            "role": "Project Owner & Frontend Developer",
-            "tech": ["React", "TypeScript", "FastAPI", "Supabase"],
-            "description": "Developed a responsive personal platform for tracking job applications, recruitment stages, deadlines, follow-ups, and career insights. Built and customized reusable React and TypeScript components. Currently developing database integration."
-        },
-        {
-            "id": "proj-2",
-            "title": "BRAINFOCUS AI",
-            "role": "Computer Vision Developer",
-            "tech": ["Python", "Computer Vision", "Face Recognition", "Git"],
-            "description": "Developed a facial recognition prototype using collected face datasets. Integrated the computer vision workflow from Google Colab prototype into the web application."
-        },
-        {
-            "id": "proj-3",
-            "title": "CALORIEVISION",
-            "role": "Backend & Integration Developer",
-            "tech": ["Python", "FastAPI", "YOLOv8", "React", "TypeScript"],
-            "description": "Developed backend logic to automatically aggregate calorie estimates. Integrated YOLOv8 detection outputs for Live Mode and real-time detection results."
-        },
-        {
-            "id": "proj-4",
-            "title": "PACKWISE AI",
-            "role": "ML Recommendation Developer",
-            "tech": ["Python", "Machine Learning", "Random Forest", "XGBoost", "Supabase"],
-            "description": "Designed a packaging recommendation pipeline and trained Random Forest/XGBoost models. Evaluated recommendation models using accuracy, precision, and recall."
-        }
-    ]
-}
-
 @app.get("/api/profile")
-async def get_profile():
+async def get_profile(user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
     if supabase:
         try:
-            res = supabase.table("profiles").select("*").eq("id", "cristine").execute()
+            res = supabase.table("profiles").select("*").eq("id", user_id).execute()
             if res.data:
                 return map_keys_to_camel(res.data[0])
-            
-            # Self-seeding: If profile doesn't exist in Supabase, create it automatically
-            logger.info("Profile row 'cristine' not found in Supabase. Auto-seeding default profile data...")
-            snake_seed = map_keys_to_snake(DEFAULT_PROFILE)
-            seed_res = supabase.table("profiles").insert(snake_seed).execute()
-            if seed_res.data:
-                return map_keys_to_camel(seed_res.data[0])
-            raise HTTPException(status_code=500, detail="Failed to auto-seed profile row.")
+            raise HTTPException(status_code=404, detail="Profile not found")
         except Exception as e:
-            logger.error(f"Supabase GET/SEED profile failed: {e}")
+            if isinstance(e, HTTPException): raise e
+            logger.error(f"Supabase GET profile failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     return memory_profile
 
 
 @app.put("/api/profile")
-async def update_profile(profile_data: Dict[str, Any]):
-    profile_data["id"] = "cristine" # Hardcoded default user identifier for single profile MVP
+async def update_profile(profile_data: Dict[str, Any], user=Depends(get_current_user)):
+    user_id = getattr(user, 'id', user.get("id")) if isinstance(user, dict) else user.id
+    profile_data["id"] = user_id
     if supabase:
         try:
             snake_data = map_keys_to_snake(profile_data)
@@ -280,7 +210,7 @@ from pypdf import PdfReader
 import io
 
 @app.post("/api/parse-resume")
-async def parse_resume(file: UploadFile = File(...)):
+async def parse_resume(file: UploadFile = File(...), user=Depends(get_current_user)):
     file_bytes = await file.read()
     try:
         # Load PDF using pypdf reader
@@ -338,27 +268,15 @@ async def parse_resume(file: UploadFile = File(...)):
         Only extract information present in the text. Return ONLY this JSON block. Do not include markdown code block formatting (like ```json ... ```).
         """
         
-        ai_provider = os.getenv("AI_PROVIDER", "gemini").lower()
-        res_text = ""
+        import google.generativeai as genai
+        gemini_key = os.getenv("GEMINI_API_KEY")
         
-        if ai_provider == "gemini" and gemini_key:
-            logger.info("Parsing resume text using Gemini (FREE)...")
+        if gemini_key:
+            genai.configure(api_key=gemini_key)
+            logger.info("Parsing resume text using Gemini...")
             model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content([prompt, f"Resume content:\n\n{text}"])
             res_text = response.text.strip()
-        elif ai_provider == "openai" and client:
-            logger.info("Parsing resume text using OpenAI...")
-            response = client.chat.completions.create(
-                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"{prompt}\n\nResume content:\n\n{text}"
-                    }
-                ],
-                response_format={"type": "json_object"}
-            )
-            res_text = response.choices[0].message.content or "{}"
         else:
             raise HTTPException(status_code=400, detail="No active AI provider is configured in environment.")
             
@@ -388,5 +306,6 @@ async def parse_resume(file: UploadFile = File(...)):
                 
         return parsed_json
     except Exception as e:
+        if isinstance(e, HTTPException): raise e
         logger.error(f"Resume parsing failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to parse resume PDF: {str(e)}")

@@ -144,7 +144,7 @@ p {
     flex-direction: column;
   }
   .main-content {
-    padding: 1.5rem;
+    padding: 1rem;
     max-height: none;
     overflow-y: visible;
     margin-top: 60px; /* space for mobile nav header */
@@ -473,7 +473,18 @@ p {
     display: flex;
   }
   .sidebar {
-    display: none; /* hidden on mobile, or toggleable */
+    position: fixed;
+    top: 60px;
+    left: -260px;
+    bottom: 0;
+    height: calc(100vh - 60px);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    display: flex;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+  }
+  .sidebar.mobile-open {
+    left: 0;
   }
 }
 

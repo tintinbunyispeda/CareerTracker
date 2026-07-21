@@ -49,6 +49,11 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Magic Import States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importError, setImportError] = useState('');
+
   // Expanded card details tracker
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
@@ -117,6 +122,58 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
       onAdd(formattedApp);
     }
     closeFormModal();
+  };
+
+  const handleMagicImport = () => {
+    try {
+      const data = JSON.parse(importText);
+      const apps = Array.isArray(data) ? data : [data];
+      
+      if (apps.length === 0) {
+        setImportError("No applications found in JSON.");
+        return;
+      }
+
+      apps.forEach(app => {
+        const reqSkills = Array.isArray(app.requiredSkills) ? app.requiredSkills : (typeof app.requiredSkills === 'string' ? app.requiredSkills.split(',').map((s:string) => s.trim()) : []);
+        const prefSkills = Array.isArray(app.preferredSkills) ? app.preferredSkills : (typeof app.preferredSkills === 'string' ? app.preferredSkills.split(',').map((s:string) => s.trim()) : []);
+        
+        const metrics = calculateMatchMetrics(profile.skills, reqSkills, prefSkills, profile.experience, app.position || 'Unknown');
+
+        const formattedApp: Omit<JobApplication, 'id'> = {
+          company: app.company || 'Unknown',
+          position: app.position || 'Unknown',
+          jobLink: app.jobLink || undefined,
+          location: app.location || 'Remote',
+          workType: app.workType || 'Remote',
+          dateFound: app.dateFound || new Date().toISOString().split('T')[0],
+          deadline: app.deadline || undefined,
+          dateApplied: app.dateApplied || undefined,
+          status: app.status || 'Wishlist',
+          matchScore: metrics.score,
+          followUpDate: app.followUpDate || undefined,
+          nextAction: app.nextAction || undefined,
+          notes: app.notes || undefined,
+          screenshot: app.screenshot || undefined,
+          priority: metrics.priority,
+          requiredSkills: reqSkills,
+          preferredSkills: prefSkills,
+          skillGaps: metrics.skillGaps,
+          requirements: Array.isArray(app.requirements) ? app.requirements : undefined,
+          responsibilities: Array.isArray(app.responsibilities) ? app.responsibilities : undefined,
+          benefits: Array.isArray(app.benefits) ? app.benefits : undefined,
+          aiMatchScore: metrics.score
+        };
+        onAdd(formattedApp);
+      });
+      
+      setIsImportModalOpen(false);
+      setImportText('');
+      setImportError('');
+      alert(`Successfully queued ${apps.length} application(s) for import!`);
+    } catch (e: any) {
+      setImportError(`Invalid JSON format: ${e.message}`);
+    }
   };
 
   const openAddModal = () => {
@@ -283,13 +340,18 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
           <h1>My Job Applications</h1>
           <p className="header-subtitle">Track, filter, and plan your next steps for applications.</p>
         </div>
-        <button className="btn btn-primary" onClick={openAddModal}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" x2="12" y1="5" y2="19" />
-            <line x1="5" x2="19" y1="12" y2="12" />
-          </svg>
-          Add Application
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-secondary" onClick={() => setIsImportModalOpen(true)} style={{ backgroundColor: 'var(--sage-green-light)', borderColor: 'var(--sage-green)', color: 'var(--sage-green-dark)' }}>
+            ✨ Magic Import
+          </button>
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" x2="12" y1="5" y2="19" />
+              <line x1="5" x2="19" y1="12" y2="12" />
+            </svg>
+            Add Application
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar Controls */}
@@ -953,6 +1015,59 @@ const Applications: React.FC<ApplicationsProps> = ({ applications, profile, onAd
           </button>
         </div>
       </Modal>
+
+      {/* Magic Import Modal */}
+      <Modal 
+        isOpen={isImportModalOpen} 
+        onClose={() => { setIsImportModalOpen(false); setImportError(''); }} 
+        title="✨ Magic Import with AI"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-sidebar)', borderRadius: '6px', fontSize: '0.85rem' }}>
+            <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>Copy & Paste this prompt to ChatGPT/Claude:</p>
+            <div style={{ backgroundColor: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontSize: '0.75rem', overflowX: 'auto', whiteSpace: 'pre-wrap', color: 'var(--color-text)', userSelect: 'all' }}>
+              Create a JSON array of 3 job applications for [Your Role]. Do NOT use markdown code blocks. Return ONLY valid JSON.
+              Use this structure:
+              [
+                &#123;
+                  "company": "Tech Corp",
+                  "position": "Frontend Developer",
+                  "location": "Remote",
+                  "workType": "Remote",
+                  "status": "Wishlist",
+                  "requiredSkills": ["React", "TypeScript", "Tailwind"],
+                  "preferredSkills": ["Figma", "Node.js"]
+                &#125;
+              ]
+            </div>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+              <em>Note: Match scores and skill gaps will be automatically calculated by the app based on your profile!</em>
+            </p>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Paste JSON output here:</label>
+            <textarea 
+              className="form-control" 
+              rows={8} 
+              placeholder='[ { ... } ]'
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+            />
+          </div>
+
+          {importError && (
+            <p style={{ color: 'var(--color-rejected)', fontSize: '0.85rem', margin: 0 }}>⚠️ {importError}</p>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={() => setIsImportModalOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleMagicImport}>Import JSON</button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 };
