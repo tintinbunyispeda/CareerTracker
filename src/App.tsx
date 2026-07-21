@@ -146,7 +146,6 @@ const SupabaseLoginScreen: React.FC<LoginProps> = ({ onAuthenticate }) => {
 };
 
 const defaultEmptyProfile: UserProfile = {
-  id: '',
   name: '',
   email: '',
   phone: '',
