@@ -128,6 +128,13 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
   const highMatchCount = applications.filter(a => a.matchScore >= 80).length;
   const activeTrackerCount = applications.filter(a => a.status === 'Applied' || a.status === 'Interviewing').length;
 
+  const getMasteryLabel = (confidence: number) => {
+    if (confidence <= 30) return 'Basic';
+    if (confidence <= 60) return 'Intermediate';
+    if (confidence <= 85) return 'Advanced';
+    return 'Expert';
+  };
+
   return (
     <div className="fade-in">
       <div className="header-bar">
@@ -311,7 +318,7 @@ const Insights: React.FC<InsightsProps> = ({ applications, profile }) => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                           <span>Asked in <strong>{item.demandCount}</strong> applications</span>
-                          <span>Confidence: <strong>{item.confidence}%</strong></span>
+                          <span>Mastery: <strong>{getMasteryLabel(item.confidence)}</strong></span>
                         </div>
                         <div style={{ height: '6px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '3px', overflow: 'hidden', marginTop: '0.2rem' }}>
                           <div 

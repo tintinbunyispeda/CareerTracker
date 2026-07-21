@@ -145,6 +145,13 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
     updateField('skills', updatedSkills);
   };
 
+  const getMasteryLabel = (confidence: number) => {
+    if (confidence <= 30) return 'Basic';
+    if (confidence <= 60) return 'Intermediate';
+    if (confidence <= 85) return 'Advanced';
+    return 'Expert';
+  };
+
   // Update skill confidence
   const handleUpdateSkillConfidence = (skillName: string, confidence: number) => {
     const updatedSkills = profile.skills.map(s => {
@@ -413,7 +420,7 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
                     <span style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--color-text)' }}>{skill.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span className="badge badge-applied" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', fontWeight: 'bold' }}>
-                        {skill.confidence}% confidence
+                        Mastery: {getMasteryLabel(skill.confidence)}
                       </span>
                       <button 
                         type="button" 
@@ -434,21 +441,31 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <input 
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
+                    <select
+                      className="form-control"
                       style={{ 
                         width: '100%', 
-                        accentColor: 'var(--sage-green)', 
-                        height: '4px', 
-                        cursor: 'pointer',
-                        margin: '0.2rem 0'
+                        padding: '0.4rem', 
+                        fontSize: '0.8rem',
+                        marginTop: '0.4rem',
+                        backgroundColor: 'var(--bg-sidebar)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '4px',
+                        color: 'var(--color-text)',
+                        cursor: 'pointer'
                       }}
-                      value={skill.confidence}
+                      value={
+                        skill.confidence <= 30 ? 25 :
+                        skill.confidence <= 60 ? 50 :
+                        skill.confidence <= 85 ? 80 : 100
+                      }
                       onChange={(e) => handleUpdateSkillConfidence(skill.name, Number(e.target.value))}
-                    />
+                    >
+                      <option value={25}>Basic</option>
+                      <option value={50}>Intermediate</option>
+                      <option value={80}>Advanced</option>
+                      <option value={100}>Expert</option>
+                    </select>
                   </div>
                 </div>
               ))}
@@ -720,7 +737,7 @@ const MyProfile: React.FC<MyProfileProps> = ({ profile, onUpdateProfile }) => {
                 "name": "My Name",
                 "email": "email@example.com",
                 "phone": "123-456-7890",
-                "skills": [&#123; "name": "React", "confidence": 90 &#125;],
+                "skills": [&#123; "name": "React", "confidence": 80 &#125;], // Use 25=Basic, 50=Intermediate, 80=Advanced, 100=Expert
                 "education": [&#123; "degree": "B.Sc.", "school": "University", "year": "2024" &#125;],
                 "experience": [&#123; "company": "Company", "role": "Role", "duration": "2020-2024", "bullets": ["Did this", "Did that"] &#125;],
                 "projects": [&#123; "title": "Project", "role": "Lead", "tech": ["React"], "description": "Desc" &#125;]
